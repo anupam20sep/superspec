@@ -19,16 +19,34 @@ export async function runCli(argv: string[]): Promise<CliResult> {
       args: rest,
       options: { spec: { type: "string" }, plan: { type: "string" } },
     });
-    const spec = parseSpec(await readFile(values.spec as string, "utf8"));
-    const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
-    const matrix = buildMatrix(spec.requirements, tasks);
-    return { code: 0, stdout: JSON.stringify({ matrix, gaps: matrixGaps(matrix) }, null, 2) };
+    const missing = [
+      values.spec === undefined ? "--spec" : null,
+      values.plan === undefined ? "--plan" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    try {
+      const spec = parseSpec(await readFile(values.spec as string, "utf8"));
+      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const matrix = buildMatrix(spec.requirements, tasks);
+      return { code: 0, stdout: JSON.stringify({ matrix, gaps: matrixGaps(matrix) }, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
   }
 
   if (command === "lint") {
     const { values } = parseArgs({ args: rest, options: { plan: { type: "string" } } });
-    const findings = lintPlan(await readFile(values.plan as string, "utf8"));
-    return { code: 0, stdout: JSON.stringify(findings, null, 2) };
+    if (values.plan === undefined) {
+      return { code: 0, stdout: "Error: missing required argument --plan" };
+    }
+    try {
+      const findings = lintPlan(await readFile(values.plan as string, "utf8"));
+      return { code: 0, stdout: JSON.stringify(findings, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
   }
 
   if (command === "scaffold") {
@@ -36,8 +54,19 @@ export async function runCli(argv: string[]): Promise<CliResult> {
       args: rest,
       options: { templates: { type: "string" }, out: { type: "string" } },
     });
-    const written = await scaffold(values.templates as string, values.out as string, {});
-    return { code: 0, stdout: JSON.stringify({ written }, null, 2) };
+    const missing = [
+      values.templates === undefined ? "--templates" : null,
+      values.out === undefined ? "--out" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    try {
+      const written = await scaffold(values.templates as string, values.out as string, {});
+      return { code: 0, stdout: JSON.stringify({ written }, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
   }
 
   return { code: 0, stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold` };

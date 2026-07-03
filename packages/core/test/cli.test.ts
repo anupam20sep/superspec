@@ -27,6 +27,32 @@ describe("runCli matrix", () => {
   });
 });
 
+describe("runCli matrix missing args", () => {
+  it("reports a missing --spec argument but still exits 0 (advise-only)", async () => {
+    const planPath = join(root, "plan.md");
+    await writeFile(planPath, "### Task T001: x\n**Implements:** FR-001\n", "utf8");
+
+    const { code, stdout } = await runCli(["matrix", "--plan", planPath]);
+    expect(code).toBe(0);
+    expect(stdout).toMatch(/--spec/);
+  });
+
+  it("reports a read error for a nonexistent spec file but still exits 0 (advise-only)", async () => {
+    const planPath = join(root, "plan.md");
+    await writeFile(planPath, "### Task T001: x\n**Implements:** FR-001\n", "utf8");
+
+    const { code, stdout } = await runCli([
+      "matrix",
+      "--spec",
+      "/nonexistent/path/spec.md",
+      "--plan",
+      planPath,
+    ]);
+    expect(code).toBe(0);
+    expect(stdout).toMatch(/error/i);
+  });
+});
+
 describe("runCli lint", () => {
   it("prints findings for a placeholder", async () => {
     const planPath = join(root, "plan.md");
