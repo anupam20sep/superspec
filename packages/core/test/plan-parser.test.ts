@@ -26,4 +26,23 @@ describe("parsePlan", () => {
       { id: "T009", title: "Bare task", frRefs: [], dependsOn: [], complexity: "mechanical" },
     ]);
   });
+
+  it("parses decimal task ids (0.1 style) with all metadata", () => {
+    const md = [
+      "### Task 0.1: Design database schema",
+      "**Implements:** FR-010",
+      "**Depends on:** none",
+      "**Complexity:** heavy",
+      "",
+      "### Task 0.2: Implement persistence layer",
+      "**Implements:** FR-011, FR-012",
+      "**Depends on:** T001",
+      "**Complexity:** mechanical",
+    ].join("\n");
+
+    expect(parsePlan(md)).toEqual([
+      { id: "0.1", title: "Design database schema", frRefs: ["FR-010"], dependsOn: [], complexity: "heavy" },
+      { id: "0.2", title: "Implement persistence layer", frRefs: ["FR-011", "FR-012"], dependsOn: ["T001"], complexity: "mechanical" },
+    ]);
+  });
 });

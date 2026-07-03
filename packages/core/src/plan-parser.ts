@@ -1,6 +1,6 @@
 import type { Task, Complexity } from "./types.js";
 
-const TASK_RE = /^###\s+Task\s+(T\d{3}):\s*(.+)/;
+const TASK_RE = /^###\s+Task\s+([\w.]+):\s*(.+)/;
 const IMPL_RE = /^\*\*Implements:\*\*\s*(.+)/;
 const DEP_RE = /^\*\*Depends on:\*\*\s*(.+)/;
 const CX_RE = /^\*\*Complexity:\*\*\s*(mechanical|heavy)/;
