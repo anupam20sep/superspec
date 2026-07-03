@@ -12,6 +12,14 @@ export interface CliResult {
 }
 
 export async function runCli(argv: string[]): Promise<CliResult> {
+  try {
+    return await runCliInner(argv);
+  } catch (err) {
+    return { code: 0, stdout: `Error: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+async function runCliInner(argv: string[]): Promise<CliResult> {
   const [command, ...rest] = argv;
 
   if (command === "matrix") {
@@ -79,5 +87,8 @@ async function main(): Promise<void> {
 
 // Run main only when invoked directly as the CLI entry point.
 if (process.argv[1] && process.argv[1].endsWith("cli.js")) {
-  void main();
+  void main().catch((err: unknown) => {
+    process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.exitCode = 0;
+  });
 }

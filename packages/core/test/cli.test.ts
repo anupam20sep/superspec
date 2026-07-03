@@ -51,6 +51,18 @@ describe("runCli matrix missing args", () => {
     expect(code).toBe(0);
     expect(stdout).toMatch(/error/i);
   });
+
+  it("reports an error for --spec given with no value but still exits 0 (advise-only)", async () => {
+    const { code, stdout } = await runCli(["matrix", "--spec"]);
+    expect(code).toBe(0);
+    expect(stdout).toMatch(/error/i);
+  });
+
+  it("reports an error for an unrecognized flag but still exits 0 (advise-only)", async () => {
+    const { code, stdout } = await runCli(["matrix", "--bogus-flag", "x"]);
+    expect(code).toBe(0);
+    expect(stdout).toMatch(/error/i);
+  });
 });
 
 describe("runCli lint", () => {
