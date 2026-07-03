@@ -11,7 +11,7 @@ const PLACEHOLDER_PATTERNS: { rule: string; re: RegExp }[] = [
   { rule: "no-similar-to", re: /similar to task/i },
 ];
 
-const TASK_HEADING_RE = /^###\s+Task\s+(T\d{3}):/;
+const TASK_HEADING_RE = /^###\s+Task\s+([\w.]+):/;
 const FAILING_TEST_RE = /failing test/i;
 const PASSING_TEST_RE = /verify it passes|make sure (they|it) pass/i;
 

@@ -39,4 +39,17 @@ describe("lintPlan TDD cycle detection", () => {
     const findings = lintPlan(md);
     expect(findings.some((f) => f.rule === "no-tdd-cycle")).toBe(false);
   });
+
+  it("flags a task with decimal PR.task numbering (0.1, 5.3) when missing TDD cycle", () => {
+    const md = [
+      "### Task 0.1: Missing TDD cycle",
+      "- [ ] Step 1: Write the code",
+      "- [ ] Step 2: Deploy it",
+    ].join("\n");
+
+    const findings = lintPlan(md);
+    const tddFinding = findings.find((f) => f.rule === "no-tdd-cycle");
+    expect(tddFinding).toBeDefined();
+    expect(tddFinding?.message).toContain("Task 0.1");
+  });
 });
