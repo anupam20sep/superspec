@@ -1,0 +1,17 @@
+{
+  "name": "superspec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc -b"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

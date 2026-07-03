@@ -1,0 +1,10 @@
+SuperSpec
+
+This project adapts methodology, template structure, and prose from two
+MIT-licensed projects:
+
+- GitHub Spec Kit — https://github.com/github/spec-kit (MIT)
+- Superpowers — https://github.com/obra/superpowers (MIT)
+
+Adapted template and skill text derived from those projects remains under the
+MIT License. See LICENSE.
