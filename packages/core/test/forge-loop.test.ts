@@ -50,6 +50,25 @@ describe("forge status and escalation", () => {
     const state = initState(tasks);
     expect(() => recordResult(state, "T999", true, { maxReviewFailures: 3 })).toThrow(/T999/);
   });
+
+  it("does not offer a dependent task when its dependency is blocked", () => {
+    const state = initState(tasks);
+    recordResult(state, "T001", false, { maxReviewFailures: 2 });
+    recordResult(state, "T001", false, { maxReviewFailures: 2 });
+    expect(state.tasks["T001"].status).toBe("blocked");
+    expect(nextTask(tasks, state)).toBeNull();
+  });
+
+  it("throws when recording a result for an already-blocked task", () => {
+    const state = initState(tasks);
+    recordResult(state, "T001", false, { maxReviewFailures: 2 });
+    recordResult(state, "T001", false, { maxReviewFailures: 2 });
+    expect(state.tasks["T001"].status).toBe("blocked");
+    expect(() =>
+      recordResult(state, "T001", true, { maxReviewFailures: 2 }),
+    ).toThrow(/T001/);
+    expect(state.tasks["T001"].status).toBe("blocked");
+  });
 });
 
 describe("forge state persistence", () => {

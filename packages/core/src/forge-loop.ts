@@ -46,6 +46,9 @@ export function recordResult(
 ): ForgeState {
   const s = state.tasks[taskId];
   if (!s) throw new Error(`Unknown task id: ${taskId}`);
+  if (s.status === "blocked") {
+    throw new Error(`Cannot record result for already-blocked task: ${taskId}`);
+  }
   if (passed) {
     s.status = "done";
   } else {
