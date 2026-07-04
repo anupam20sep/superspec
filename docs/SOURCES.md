@@ -81,9 +81,19 @@ Authored in Plan #2 (shared content layer). **This is where the bulk of the valu
 
 | SuperSpec artifact | Upstream source | Strategy |
 |---|---|---|
-| `packages/render/src/registry.ts` (`INTEGRATION_REGISTRY`) | `SK: src/specify_cli/integrations/_commands.py`, `_scaffold_commands.py`, `_install_commands.py` (declarative per-target `{dir, format, args-token, extension}`) | REIMPLEMENT (Python→TS) |
-| `packages/render/src/render.ts` (placeholder/path rewrite, cross-ref resolve) | `SK: IntegrationBase.process_template()` + format base classes (`MarkdownIntegration`/`TomlIntegration`/`SkillsIntegration`) | REIMPLEMENT |
-| Installed-file manifest (safe re-render) | `SK: src/specify_cli/.../manifest.py` (SHA-256 tracking) | REIMPLEMENT (optional) |
+| `packages/render/src/targets.ts` (`INTEGRATION_REGISTRY`, `claudeTarget`/`cursorTarget`; scoped to Claude+Cursor, `copilotTarget` deferred) | `SK: src/specify_cli/integrations/_commands.py`, `_scaffold_commands.py`, `_install_commands.py` (declarative per-target `{dir, format, args-token, extension}`) | REIMPLEMENT (Python→TS) |
+| `packages/render/src/skill-reader.ts` (SKILL.md → `{name, frontmatter, body}`) + `packages/render/src/render.ts` (walk `content/skills/`, apply target, write) + `packages/render/src/cli.ts` (`superspec-render` entrypoint) | `SK: IntegrationBase.process_template()` + format base classes (`MarkdownIntegration`/`TomlIntegration`/`SkillsIntegration`) | REIMPLEMENT |
+| Installed-file manifest (safe re-render) | `SK: src/specify_cli/.../manifest.py` (SHA-256 tracking) | REIMPLEMENT (optional, not built — retrofit no-op-diff check serves the same safety purpose today) |
+
+---
+
+## Install mechanism (Plan #6b) — local marketplace + install script
+
+| SuperSpec artifact | Upstream source | Strategy |
+|---|---|---|
+| `.claude-plugin/marketplace.json` (local/internal marketplace manifest) | `SP: .claude-plugin/marketplace.json` (real schema: `name`, `description`, `owner`, `plugins[]`) | ADAPT |
+| `scripts/install.sh` (idempotent Claude Code marketplace registration + install; documents Cursor's no-install auto-discovery and Copilot's future file-based install) | none — Superpowers relies on manual `/plugin install` against a public marketplace; SuperSpec's local/private marketplace needs one extra one-time registration step a script can automate | NEW |
+| `docs/install.md` (human-readable install instructions per tool) | none | NEW |
 
 ---
 
