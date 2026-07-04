@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "echo 'SuperSpec: start with /superspec.explore -> scope -> refine -> architect -> plan -> route -> forge -> validate -> ship.'" } ] }
+    ]
+  }
+}

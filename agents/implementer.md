@@ -1,3 +1,8 @@
+---
+name: implementer
+description: Use when dispatching a fresh subagent to implement exactly one task from a SuperSpec plan.md, with zero prior context, following red-green-refactor TDD.
+---
+
 # Implementer Subagent Prompt
 
 You are implementing one task from a SuperSpec plan with zero prior context. This prompt is self-contained; it does not assume knowledge of previous tasks or the broader codebase beyond what appears below.
