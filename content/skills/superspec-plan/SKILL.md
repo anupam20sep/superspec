@@ -76,7 +76,7 @@ include this section.]
 ## Task Structure
 
 ````markdown
-### Task N: [Component Name]
+### Task T001: [Component Name]
 
 **Implements:** FR-### [SuperSpec requirement: every task MUST cite which functional requirement(s) from the spec it satisfies — use the exact FR-### identifiers from spec.md]
 
