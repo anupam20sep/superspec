@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { z } from "zod";
 import { buildToolDefinitions } from "../src/mcp-server.js";
 
 describe("MCP tool definitions", () => {
@@ -19,7 +20,20 @@ describe("MCP tool definitions", () => {
 
   it("route-model handler routes by complexity", async () => {
     const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
-    const res = await tool.handler({ complexity: "heavy" });
+    const res = await tool.handler({ complexity: "complex" });
     expect(JSON.parse(res.content[0].text)).toEqual({ model: "strong" });
+  });
+
+  it("route-model handler routes moderate complexity to fast model", async () => {
+    const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
+    const res = await tool.handler({ complexity: "moderate" });
+    expect(JSON.parse(res.content[0].text)).toEqual({ model: "fast" });
+  });
+
+  it("route-model schema accepts moderate and complex complexity values", () => {
+    const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
+    const schema = z.object(tool.schema);
+    expect(() => schema.parse({ complexity: "moderate" })).not.toThrow();
+    expect(() => schema.parse({ complexity: "complex" })).not.toThrow();
   });
 });

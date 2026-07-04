@@ -13,7 +13,7 @@ export interface Spec {
   criteria: SuccessCriterion[];
 }
 
-export type Complexity = "mechanical" | "heavy";
+export type Complexity = "mechanical" | "moderate" | "complex";
 
 export interface Task {
   id: string; // "T001"

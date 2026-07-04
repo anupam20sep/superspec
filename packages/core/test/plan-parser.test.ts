@@ -12,12 +12,25 @@ describe("parsePlan", () => {
       "### Task T002: Add redirect handler",
       "**Implements:** FR-003",
       "**Depends on:** T001",
-      "**Complexity:** heavy",
+      "**Complexity:** complex",
     ].join("\n");
 
     expect(parsePlan(md)).toEqual([
       { id: "T001", title: "Create URL model", frRefs: ["FR-001", "FR-002"], dependsOn: [], complexity: "mechanical" },
-      { id: "T002", title: "Add redirect handler", frRefs: ["FR-003"], dependsOn: ["T001"], complexity: "heavy" },
+      { id: "T002", title: "Add redirect handler", frRefs: ["FR-003"], dependsOn: ["T001"], complexity: "complex" },
+    ]);
+  });
+
+  it("parses a task tagged moderate complexity", () => {
+    const md = [
+      "### Task T003: Refactor config loader",
+      "**Implements:** FR-004",
+      "**Depends on:** none",
+      "**Complexity:** moderate",
+    ].join("\n");
+
+    expect(parsePlan(md)).toEqual([
+      { id: "T003", title: "Refactor config loader", frRefs: ["FR-004"], dependsOn: [], complexity: "moderate" },
     ]);
   });
 
@@ -32,7 +45,7 @@ describe("parsePlan", () => {
       "### Task 0.1: Design database schema",
       "**Implements:** FR-010",
       "**Depends on:** none",
-      "**Complexity:** heavy",
+      "**Complexity:** complex",
       "",
       "### Task 0.2: Implement persistence layer",
       "**Implements:** FR-011, FR-012",
@@ -41,7 +54,7 @@ describe("parsePlan", () => {
     ].join("\n");
 
     expect(parsePlan(md)).toEqual([
-      { id: "0.1", title: "Design database schema", frRefs: ["FR-010"], dependsOn: [], complexity: "heavy" },
+      { id: "0.1", title: "Design database schema", frRefs: ["FR-010"], dependsOn: [], complexity: "complex" },
       { id: "0.2", title: "Implement persistence layer", frRefs: ["FR-011", "FR-012"], dependsOn: ["T001"], complexity: "mechanical" },
     ]);
   });

@@ -3,7 +3,7 @@ import type { Task, Complexity } from "./types.js";
 const TASK_RE = /^###\s+Task\s+([\w.]+):\s*(.+)/;
 const IMPL_RE = /^\*\*Implements:\*\*\s*(.+)/;
 const DEP_RE = /^\*\*Depends on:\*\*\s*(.+)/;
-const CX_RE = /^\*\*Complexity:\*\*\s*(mechanical|heavy)/;
+const CX_RE = /^\*\*Complexity:\*\*\s*(mechanical|moderate|complex)/;
 
 function parseRefs(text: string, prefix: string): string[] {
   if (/^\s*none\s*$/i.test(text)) return [];

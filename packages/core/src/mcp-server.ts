@@ -46,8 +46,8 @@ export function buildToolDefinitions(): ToolDef[] {
     {
       name: "route-model",
       description: "Recommend strong or fast model for a task complexity.",
-      schema: { complexity: z.enum(["mechanical", "heavy"]) },
-      handler: async (args) => json({ model: routeModel({ complexity: args.complexity as "mechanical" | "heavy" }) }),
+      schema: { complexity: z.enum(["mechanical", "moderate", "complex"]) },
+      handler: async (args) => json({ model: routeModel({ complexity: args.complexity as "mechanical" | "moderate" | "complex" }) }),
     },
     {
       name: "scaffold",
