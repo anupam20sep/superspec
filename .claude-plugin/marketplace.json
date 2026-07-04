@@ -1,0 +1,18 @@
+{
+  "name": "superspec-dev",
+  "description": "Internal/local marketplace for the SuperSpec plugin (spec-driven + TDD-driven AI development). Not published publicly.",
+  "owner": {
+    "name": "SuperSpec contributors"
+  },
+  "plugins": [
+    {
+      "name": "superspec",
+      "description": "Spec-driven + TDD-driven AI development: specify, design, plan, orchestrate, forge, validate.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "SuperSpec contributors"
+      }
+    }
+  ]
+}
