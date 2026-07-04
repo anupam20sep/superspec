@@ -70,7 +70,7 @@ For each task, apply the model-routing rule:
   - Examples: test scaffolding, seed scripts, boilerplate setup, deterministic transformations
   - Rationale: Follows a clear pattern; minimal ambiguity about intent
 
-**Model-routing function:** `routeModel(complexity) → { "heavy" → "strong", "mechanical" → "fast" }`
+**Model-routing function:** `routeModel(complexity) → complexity === "heavy" ? "strong" : "fast"` (any non-`"heavy"` complexity, including `"mechanical"`, routes to `"fast"`)
 
 Assign model routing to each task individually, then summarize by window (all tasks in a window may use different models, but you group them because they have no dependencies).
 
@@ -136,7 +136,7 @@ Write output file `execution-map.md` with these sections:
 
 3. **Model Routing:**
    - Tabular list: Task | Complexity | Model Class | Rationale
-   - Summary line: `routeModel(complexity) → { "heavy" → "strong", "mechanical" → "fast" }`
+   - Summary line: `routeModel(complexity) → complexity === "heavy" ? "strong" : "fast"` (any non-`"heavy"` complexity, including `"mechanical"`, routes to `"fast"`)
 
 4. **Personas:**
    - Tabular list: Window | Primary Persona | Secondary Persona | Responsibilities
@@ -223,4 +223,4 @@ Before handing off to superspec-forge:
 
 ---
 
-<!-- Adapted from SP: skills/dispatching-parallel-agents/SKILL.md (MIT) for the parallel-dispatch concept; Dependency DAG, Parallel Windows, Model Routing, Personas, Rollback, and Verification Gates sections are new to SuperSpec. See /NOTICE. -->
+<!-- Adapted from SP: skills/dispatching-parallel-agents/SKILL.md (MIT) for the parallel-dispatch concept (grouping independent, non-conflicting work); the execution-map.md output format (Dependency DAG, Parallel Windows, Model Routing, Personas, Rollback, Verification Gates) and the model-routing rule are new to SuperSpec, since the source skill governs live subagent dispatch rather than build-time execution planning. See /NOTICE. -->
