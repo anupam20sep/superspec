@@ -12,17 +12,18 @@ Tasks in this feature form the following dependency graph:
 | T002: Seed test data | T003: Service layer tests | Tests need fixtures |
 | T001: Backend schema migration | T004: API endpoints | Endpoints depend on schema |
 | T004: API endpoints | T005: Integration tests | Must test the live endpoints |
+| T006: Frontend setup | T007: Frontend components | Components require scaffolding and boilerplate from setup |
 
 **Graphical representation:**
 ```
-T001 (schema)
-  ├─→ T002 (seed data)
+T001 (schema)                T006 (frontend setup)
+  ├─→ T002 (seed data)         └─→ T007 (frontend components)
   │     └─→ T003 (service tests)
   └─→ T004 (API)
         └─→ T005 (integration tests)
 ```
 
-Tasks T001 and T006 (frontend component) are independent and may start immediately. Task T002 and T004 may run in parallel after T001 completes.
+Tasks T001 and T006 (frontend setup) are independent and may start immediately. Task T002 and T004 may run in parallel after T001 completes. Task T007 (frontend components) depends on T006 (setup).
 
 ## Parallel Windows
 
