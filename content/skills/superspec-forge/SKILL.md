@@ -1,6 +1,6 @@
 ---
 name: superspec-forge
-description: Use when you have an execution map or task plan ready to implement — runs the autonomous forge loop that dispatches fresh implementer and reviewer subagents per task, tracks state via next-task/record-task-result/forge-status, and escalates stuck tasks instead of retrying forever
+description: Use when you have an execution map or task plan ready to implement — runs the autonomous forge loop that dispatches fresh implementer and reviewer subagents per task, tracks state via the forge-loop state machine (next-task/record-task-result/forge-status), and escalates stuck tasks instead of retrying forever
 ---
 
 # superspec-forge: The Autonomous Implementation Loop
@@ -11,7 +11,7 @@ You take an execution map (from superspec-route) or a task plan (from superspec-
 
 **Why subagents:** you delegate each task to a specialized agent with isolated context. By precisely crafting its instructions, you ensure it stays focused and succeeds. It never inherits your session's context or history — you construct exactly what it needs. This also preserves your own context for coordination work across the whole loop.
 
-**Core principle:** call `next-task` for a DAG-ready task -> route it by complexity -> dispatch a fresh implementer (red-green-refactor, zero prior context) -> dispatch a fresh reviewer (spec + quality verdicts) -> call `record-task-result` with the verdict -> repeat until `forge-status` reports `complete: true`.
+**Core principle:** `nextTask`, `recordResult`, and `forgeStatus` are the three operations of the `@superspec/core` library's forge-loop state machine (`packages/core/src/forge-loop.ts`): select a DAG-ready task -> route it by complexity -> dispatch a fresh implementer (red-green-refactor, zero prior context) -> dispatch a fresh reviewer (spec + quality verdicts) -> record the verdict -> repeat until status reports `complete: true`. Today, only `forge-status` is exposed as an MCP tool (and, as detailed below, only in its fresh-state form). `next-task` and `record-task-result` are not currently exposed as MCP tools or CLI subcommands. If you are working in a context that can run TypeScript/Node against `@superspec/core`, drive the loop by importing and calling `nextTask`/`recordResult` directly; otherwise, approximate the same logic yourself — scan the plan's tasks, pick the first one whose dependencies are all recorded as `done`, and track each task's pass/fail counts and the blocked threshold in your own ledger — until these are exposed as callable tools in a future iteration.
 
 **Continuous execution:** do not pause to check in with your human partner between tasks. Execute all ready tasks without stopping. The only reasons to stop are: a task permanently `blocked` that you cannot resolve, ambiguity that genuinely prevents progress, or `forge-status` reporting `complete: true`. "Should I continue?" prompts waste your partner's time — they asked you to run the loop, so run it.
 
@@ -26,24 +26,26 @@ Everything below describes the subagent-driven form; where a platform lacks a na
 
 ## The Forge State Machine
 
-The loop is backed by a small, tested state machine (not a convention you have to remember correctly by hand):
+The loop is backed by a small, tested state machine (not a convention you have to remember correctly by hand) — implemented as the `nextTask`, `recordResult`, and `forgeStatus` functions in `packages/core/src/forge-loop.ts`. Of these, only `forge-status` is currently wired up as a callable MCP tool; `next-task` and `record-task-result` exist today as library functions you (or a future tool wrapper) call directly, not as tools you can invoke by name:
 
-- **`next-task`** returns the next task that is `pending` AND whose dependencies are *all* `"done"` — a task with an in-progress or merely non-pending dependency is not offered, even if that dependency isn't `"blocked"`. It returns nothing once no ready task remains.
-- **`record-task-result`** takes a pass/fail verdict for a task:
+- **`nextTask`** returns the next task that is `pending` AND whose dependencies are *all* `"done"` — a task with an in-progress or merely non-pending dependency is not offered, even if that dependency isn't `"blocked"`. It returns nothing once no ready task remains.
+- **`recordResult`** takes a pass/fail verdict for a task:
   - **Pass:** marks the task `done`.
-  - **Fail:** increments that task's review-failure count. Once the count reaches the configured maximum, the task flips to `blocked` — permanently. This is enforced by the state machine itself: calling `record-task-result` again on a task that is already `blocked` is rejected outright, not just discouraged. You cannot talk the loop into un-blocking a task by retrying; if a task is blocked, escalate it (see below) rather than looping on it.
-- **`forge-status`** reports `{ total, done, blocked, pending, complete }` for the current task set. `complete` is `true` only when every task is `done` — a run with any `blocked` task never reports complete on its own; you must resolve the blockage (fix the plan, split the task, get human input) before the loop can finish.
+  - **Fail:** increments that task's review-failure count. Once the count reaches the configured maximum, the task flips to `blocked` — permanently. This is enforced by the state machine itself: calling `recordResult` again on a task that is already `blocked` is rejected outright, not just discouraged. You cannot talk the loop into un-blocking a task by retrying; if a task is blocked, escalate it (see below) rather than looping on it.
+- **`forge-status`** (the one operation exposed as an MCP tool today) reports `{ total, done, blocked, pending, complete }` for the current task set. `complete` is `true` only when every task is `done` — a run with any `blocked` task never reports complete on its own; you must resolve the blockage (fix the plan, split the task, get human input) before the loop can finish.
 
 State is persisted to `.superspec/state.json` as you go, so a killed or restarted session can resume from disk instead of re-deriving progress from memory or re-running finished tasks. Be precise about where that resume happens today: it is a library/CLI-level capability of the forge state functions, not something the `forge-status` tool call itself guarantees — as currently exposed, that one call builds status fresh from the task/plan text rather than loading any prior saved state. If you are driving the loop through that tool directly, treat each call as evaluating the plan from scratch, and rely on your own progress ledger (or a CLI wrapper that does call the persisted-state loader) for true cross-session resume, not on that tool call alone.
 
 ## The Process
+
+The diagram below describes the loop's logic — what to select, route, implement, review, record, and repeat until complete — which holds regardless of how you invoke it. As covered above, only `forge-status` is currently a callable MCP tool; the `next-task` / `record-task-result` steps mean "call the `@superspec/core` library functions if you can, otherwise apply the same logic yourself," not "call a tool of that name."
 
 ```dot
 digraph process {
     rankdir=TB;
 
     "Read execution map / plan, note global constraints" [shape=box];
-    "Call next-task" [shape=box];
+    "Select next task (nextTask)" [shape=box];
     "Ready task returned?" [shape=diamond];
     "Route task by complexity (mechanical->fast, heavy->strong)" [shape=box];
     "Dispatch implementer subagent (red-green-refactor, zero prior context)" [shape=box];
@@ -52,17 +54,17 @@ digraph process {
     "Implementer implements, tests, commits, self-reviews" [shape=box];
     "Dispatch fresh internal reviewer subagent (spec + quality verdicts)" [shape=box];
     "Reviewer approves both verdicts?" [shape=diamond];
-    "Call record-task-result(passed: false)" [shape=box];
+    "Record result: fail (recordResult)" [shape=box];
     "Task now blocked?" [shape=diamond];
     "Escalate: leave blocked, continue with other ready tasks" [shape=box];
     "Loop back to implementer with reviewer feedback" [shape=box];
-    "Call record-task-result(passed: true)" [shape=box];
+    "Record result: pass (recordResult)" [shape=box];
     "Call forge-status" [shape=box];
     "complete: true?" [shape=diamond];
     "Report done" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read execution map / plan, note global constraints" -> "Call next-task";
-    "Call next-task" -> "Ready task returned?";
+    "Read execution map / plan, note global constraints" -> "Select next task (nextTask)";
+    "Select next task (nextTask)" -> "Ready task returned?";
     "Ready task returned?" -> "Route task by complexity (mechanical->fast, heavy->strong)" [label="yes"];
     "Ready task returned?" -> "Call forge-status" [label="no (blocked/none left)"];
     "Route task by complexity (mechanical->fast, heavy->strong)" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
@@ -72,14 +74,14 @@ digraph process {
     "Implementer asks questions?" -> "Implementer implements, tests, commits, self-reviews" [label="no"];
     "Implementer implements, tests, commits, self-reviews" -> "Dispatch fresh internal reviewer subagent (spec + quality verdicts)";
     "Dispatch fresh internal reviewer subagent (spec + quality verdicts)" -> "Reviewer approves both verdicts?";
-    "Reviewer approves both verdicts?" -> "Call record-task-result(passed: false)" [label="no"];
-    "Call record-task-result(passed: false)" -> "Task now blocked?";
+    "Reviewer approves both verdicts?" -> "Record result: fail (recordResult)" [label="no"];
+    "Record result: fail (recordResult)" -> "Task now blocked?";
     "Task now blocked?" -> "Escalate: leave blocked, continue with other ready tasks" [label="yes (max failures reached)"];
     "Task now blocked?" -> "Loop back to implementer with reviewer feedback" [label="no (retries remain)"];
     "Loop back to implementer with reviewer feedback" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
-    "Reviewer approves both verdicts?" -> "Call record-task-result(passed: true)" [label="yes"];
-    "Call record-task-result(passed: true)" -> "Call next-task";
-    "Escalate: leave blocked, continue with other ready tasks" -> "Call next-task";
+    "Reviewer approves both verdicts?" -> "Record result: pass (recordResult)" [label="yes"];
+    "Record result: pass (recordResult)" -> "Select next task (nextTask)";
+    "Escalate: leave blocked, continue with other ready tasks" -> "Select next task (nextTask)";
     "Call forge-status" -> "complete: true?";
     "complete: true?" -> "Report done" [label="yes"];
     "complete: true?" -> "Escalate blocked tasks to human partner" [label="no, blocked tasks remain" shape=box];
@@ -125,18 +127,18 @@ On failure, send the reviewer's findings back to the *same* implementer subagent
 
 A task becomes permanently `blocked` after repeated review failures — this is the loop's guarantee against retrying forever on a task that cannot succeed as specified. When a task blocks:
 
-1. **Do not retry it.** The state machine will reject further `record-task-result` calls against it; treat that rejection as confirmation you should stop, not as a bug to route around.
-2. **Keep going on everything else.** Call `next-task` again — other DAG-ready tasks whose dependencies don't include the blocked one are still eligible and should proceed.
+1. **Do not retry it.** The state machine will reject further `recordResult` calls against it (whether invoked via the library or approximated by hand); treat that rejection — or your own manual re-check that it's blocked — as confirmation you should stop, not as a bug to route around.
+2. **Keep going on everything else.** Select the next ready task again (via `nextTask` or your manual scan) — other DAG-ready tasks whose dependencies don't include the blocked one are still eligible and should proceed.
 3. **Surface the blockage to your human partner** once no more ready tasks remain (i.e., `forge-status` shows `pending > 0` or `blocked > 0` but not `complete`). Bring the task's acceptance criteria, the reviewer's repeated findings, and your own assessment of why it kept failing (ambiguous spec, wrong dependency, task too large). Let the human decide: re-scope the task, split it, or change the plan — don't guess and don't force another retry yourself.
 4. **Never treat "all remaining tasks are blocked or waiting on a blocked dependency" as done.** `forge-status`'s `complete` field is the only source of truth for "finished"; a quiet session with nothing left to dispatch is not the same as `complete: true`.
 
 ## Durable Progress
 
-Conversation memory does not survive compaction. Track progress in the persisted forge state (`.superspec/state.json`) plus a short ledger of what happened per task (which model implemented it, review outcome, commit range) — after a compaction or restart, trust the saved state and `git log` over your own recollection, and resume at the first task `next-task` actually offers rather than re-deriving where you left off from memory.
+Conversation memory does not survive compaction. Track progress in the persisted forge state (`.superspec/state.json`) plus a short ledger of what happened per task (which model implemented it, review outcome, commit range) — after a compaction or restart, trust the saved state and `git log` over your own recollection, and resume at the first task `nextTask` (or your manual dependency scan) actually offers rather than re-deriving where you left off from memory.
 
 ## Common Mistakes
 
-**Wrong:** retrying a blocked task by calling `record-task-result` again with a different verdict, hoping it un-blocks. **Right:** the call is rejected; escalate instead.
+**Wrong:** retrying a blocked task by calling `recordResult` again with a different verdict, hoping it un-blocks. **Right:** the call is rejected (or, if you're approximating the state machine by hand, you must honor that same rule yourself); escalate instead.
 
 **Wrong:** treating `forge-status`'s fresh-from-plan-text call as if it reflects a resumed session's on-disk progress. **Right:** know that this particular call rebuilds state from the plan text each time — real cross-session resume relies on the persisted state file being loaded, which happens at the library/CLI level, not inside that call.
 
@@ -149,7 +151,7 @@ Conversation memory does not survive compaction. Track progress in the persisted
 ## Red Flags
 
 **Never:**
-- Retry an already-blocked task, or interpret a rejected `record-task-result` call as something to work around
+- Retry an already-blocked task, or interpret a rejected (or manually-detected) `recordResult` outcome as something to work around
 - Skip either review verdict (spec compliance AND code quality are both required every time)
 - Move to the next task while the current one has open, unresolved review findings
 - Let implementer self-review stand in for the independent reviewer subagent
@@ -165,4 +167,4 @@ Conversation memory does not survive compaction. Track progress in the persisted
 
 ---
 
-<!-- Adapted from SP: skills/subagent-driven-development/SKILL.md (MIT) and skills/executing-plans/SKILL.md (MIT), fused with TDD discipline; the next-task/record-task-result/forge-status loop calling @superspec/core is new to SuperSpec. See /NOTICE. -->
+<!-- Adapted from SP: skills/subagent-driven-development/SKILL.md (MIT) and skills/executing-plans/SKILL.md (MIT), fused with TDD discipline; the next-task/record-task-result/forge-status state-machine design (implemented in @superspec/core's forge-loop.ts) is new to SuperSpec. See /NOTICE. -->
