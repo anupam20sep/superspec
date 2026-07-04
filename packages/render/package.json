@@ -1,0 +1,7 @@
+{
+  "name": "@superspec/render",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "superspec-render": "./dist/cli.js" },
+  "scripts": { "build": "tsc -b" }
+}
