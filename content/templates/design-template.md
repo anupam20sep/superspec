@@ -57,7 +57,7 @@
 specs/{{FEATURE}}/
 ├── spec.md              # Phase -1: Feature specification
 ├── design.md            # Phase 0: This document (unified design artifact)
-├── tasks.md             # Phase 1: Implementation tasks
+├── plan.md              # Phase 1: Implementation tasks
 └── adr/                 # Phase 0+: Architecture Decision Records
     └── [ADR files as needed]
 ```
