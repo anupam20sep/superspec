@@ -67,7 +67,7 @@ digraph process {
     "Select next task (nextTask)" -> "Ready task returned?";
     "Ready task returned?" -> "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" [label="yes"];
     "Ready task returned?" -> "Call forge-status" [label="no (blocked/none left)"];
-    "Route task by complexity (mechanical->fast, heavy->strong)" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
+    "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
     "Dispatch implementer subagent (red-green-refactor, zero prior context)" -> "Implementer asks questions?";
     "Implementer asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
@@ -107,7 +107,7 @@ Route every task through `route-model` before dispatch. The rule is mechanical, 
 - **`complexity: "moderate"`** (multi-file refactoring, straightforward feature work, structured changes) -> fast model.
 - **`complexity: "complex"`** (multi-file coordination, design judgment, system-wide implications) -> strong model.
 
-Apply the same rule to the reviewer: a small mechanical diff does not need the strongest model to review; a heavy task's diff does.
+Apply the same rule to the reviewer: a small mechanical diff does not need the strongest model to review; a complex task's diff does.
 
 **Always specify the model explicitly when dispatching a subagent.** An omitted model inherits your session's default — often the most capable and most expensive — which silently defeats the routing rule.
 

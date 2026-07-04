@@ -153,7 +153,7 @@ Write output file `execution-map.md` with these sections:
    - Tabular list: Gate | Applies To | Criteria | Owner
    - Gate policy (how failures block merge)
 
-All tables must be properly markdown-formatted. All references to tasks use T### format. All model classes use backticks: `heavy`, `mechanical`, `strong`, `fast`.
+All tables must be properly markdown-formatted. All references to tasks use T### format. Use backticks for complexity values (`mechanical`, `moderate`, `complex`) and model classes (`strong`, `fast`) — the two are distinct: complexity is a property of the task, model class is what `routeModel` returns.
 
 ## Common Mistakes
 
