@@ -33,7 +33,7 @@ Windows define groups of tasks that can execute concurrently. No two tasks in a 
 |--------|-------|-------|---------|
 | **W1: Schema & Structure** | T001 (schema migration) | `heavy` → strong | Schema migration sets the stage; cannot parallelize with dependent tasks. |
 | **W2: Data Layer** | T002 (seed data), T006 (frontend setup) | `mechanical` → fast | Data seeding and frontend setup have no shared writes and no dependencies. ⚠️ Do NOT parallelize T002 with T003 (service tests); T003 needs T002's fixtures first. |
-| **W3: API & Frontend** | T004 (API endpoints), T007 (frontend components) | `heavy` → strong | API and frontend development are independent until integration. |
+| **W3: API & Frontend** | T004 (API endpoints), T007 (frontend components) | `heavy` → strong | API work has no dependency on frontend; T007 requires T006 (W2) to have completed first, so W3 cannot start before W2 finishes. Within W3, T004 and T007 are independent of each other and may run in parallel. |
 | **W4: Testing & Integration** | T003 (service layer tests), T005 (integration tests) | `mechanical` → fast | Unit-level service tests and full integration tests can run together after data/API layers are ready. |
 | **W5: Quality Gates** | All verification checks (coverage, lint, type safety) | `mechanical` → fast | Run after all development windows complete. |
 
