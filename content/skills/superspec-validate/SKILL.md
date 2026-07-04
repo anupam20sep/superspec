@@ -13,7 +13,7 @@ Claiming a feature is complete without verification is dishonest, not efficient.
 
 **Core principle**: Evidence before assertions, always.
 
-**Validating a SuperSpec feature means**: (1) running the actual tools (`build-matrix`, `lint-plan`); (2) reading the real output (not assuming); (3) checking constitution compliance (Principle 1: Test-First, Principle 2: Traceability Spine) with explicit evidence; (4) verifying per-window gates from the execution map are satisfied; (5) reporting actual results, not assumptions.
+**Validating a SuperSpec feature means**: (1) running the actual tools (`build-matrix`, `lint-plan`); (2) reading the real output (not assuming); (3) checking constitution compliance (Principle 1: Test-First (NON-NEGOTIABLE), Principle 2: Traceability Spine (NON-NEGOTIABLE)) with explicit evidence; (4) verifying per-window gates from the execution map are satisfied; (5) reporting actual results, not assumptions.
 
 ## The Iron Law
 
@@ -62,8 +62,8 @@ A SuperSpec feature is "complete" when ALL of the following are true:
 |--------|---|---|
 | **Coverage Matrix** | Every functional requirement (FR-###) maps to at least one task in plan.md | `build-matrix` output shows 0 gaps; no orphaned FR-###s |
 | **Plan Quality** | All tasks follow TDD red-green-refactor discipline; no TODOs or placeholder text | `lint-plan` output shows 0 critical findings |
-| **Principle 1: Test-First** | Every task in plan.md has a failing test written first, passing test after implementation | Read plan.md line-by-line; search for explicit "Test: [describe-failure]" → "Impl:" → "Test passes" cycle per task |
-| **Principle 2: Traceability Spine** | Every FR-### has a covering task AND a passing test; the matrix is never broken | `build-matrix` output; test-suite pass report (0 failing tests covering these tasks) |
+| **Principle 1: Test-First (NON-NEGOTIABLE)** | Every task in plan.md has a failing test written first, passing test after implementation | Read plan.md line-by-line; search for explicit "Test: [describe-failure]" → "Impl:" → "Test passes" cycle per task |
+| **Principle 2: Traceability Spine (NON-NEGOTIABLE)** | Every FR-### has a covering task AND a passing test; the matrix is never broken | `build-matrix` output; test-suite pass report (0 failing tests covering these tasks) |
 | **Constitution Compliance** | Principles 1 & 2 (the non-negotiable ones) are honored in fact, not just in documentation | Evidence lines from execution: (1) TDD cycles in plan.md, (2) passing tests, (3) 0 uncovered FRs |
 | **Per-Window Gates** | Each execution-map.md window has passed its defined verification gates (schema validation, test coverage, type safety, linting, security, performance, rollback rehearsal) | Read execution-map.md "Verification Gates" table; confirm each gate owner has signed off or provide gate-pass evidence |
 
@@ -111,10 +111,9 @@ Output: { matrix: [{FR, task, test}], gaps: [{FR, reason}] }
 **Command: lint-plan**
 ```
 Input: plan.md text
-Output: { issues: [{type, line, message}], cycles: int }
+Output: LintFinding[] = [{ line, rule, message }, ...]
 ```
-- If issues array has any `type: "missing_tdd_cycle"` or `type: "placeholder_found"`: STOP — document which tasks lack TDD structure
-- Count TDD cycles found; confirm ≥1 per task
+- If array has any findings with `rule: "no-tdd-cycle"` (missing red-green-refactor) or `rule: "no-tbd"` / `"no-implement-later"` / `"no-vague-error"` / `"no-similar-to"` (placeholder patterns): STOP — document which tasks lack TDD structure or have placeholders
 - If all clear: continue to Phase 3
 
 ### Phase 3: Test-First Compliance (Principle 1)
@@ -154,17 +153,17 @@ FR-001: User can upload file
 
 Read execution-map.md, find the "Verification Gates" section. For each window (W1–W5):
 
-| Gate | Window | Evidence Required |
-|------|--------|---|
-| Schema Validation | W1 | `npm run db:validate` exit 0; no breaking changes |
-| Unit Test Coverage | W2, W3, W4 | Coverage report: ≥80% (≥90% critical paths) |
-| Type Safety | W3, W5 | `npm run typecheck` exit 0; no `any` types |
-| Linting | W5 | `npm run lint` exits 0; no auto-fixes needed |
-| Contract Tests | W3, W4 | OpenAPI schema validation passes; mocks ≡ live API |
-| Integration Tests | W4 | All integration tests pass on staging; 3 consecutive green runs |
-| Security Scan | W5 | `npm audit` / Snyk: 0 high/critical vulns |
-| Performance Baseline | W5 | API ≤200ms p99, Lighthouse ≥90 (if applicable) |
-| Rollback Rehearsal | W5 | Rollback script tested in staging; clean revert |
+| Gate | Applies To | Criteria | Owner |
+|------|------------|----------|-------|
+| **Schema Validation** | W1 | Schema change passes `npm run db:validate`. No breaking changes to existing API contracts. Tested on backup data. | @backend |
+| **Unit Test Coverage** | W2, W3, W4 | All new code has ≥80% line coverage (≥90% for critical paths like auth, payments). Coverage diffs tracked in CI. | @qa, @backend |
+| **Type Safety** | W3, W5 | `npm run typecheck` passes. No `any` types except in explicitly-allowed legacy modules. | @tech-lead |
+| **Linting** | W5 | `npm run lint -- --fix` applies no changes. ESLint and Prettier agree. | @tech-lead |
+| **Contract Tests** | W3 (API), W4 | API schema validated against OpenAPI spec. Frontend mock server matches live API. Cross-team contract signed off. | @backend, @frontend |
+| **Integration Tests** | W4 | All integration tests pass on the staging environment. No flaky tests; 3 consecutive green runs required. | @qa |
+| **Security Scan** | W5 | SAST scan (e.g., `npm audit`, Snyk) returns 0 high/critical vulns. Secrets not committed (pre-commit hook enforces). | @security |
+| **Performance Baseline** | W5 | For W3 (API): new endpoints have ≤200ms p99 latency under load test (100 req/s). For W3 (frontend): Lighthouse score ≥90. | @performance |
+| **Rollback Rehearsal** | W5 | Rollback procedure tested in staging. Revert commits cleanly; no orphaned references or state. | @tech-lead |
 
 For each gate, confirm:
 - Owner has signed off OR
