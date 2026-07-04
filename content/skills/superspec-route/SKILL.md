@@ -18,7 +18,7 @@ A critical insight from parallel task dispatching is that **independent work mus
 Use superspec-route when:
 - You have a task plan with multiple tasks and dependencies
 - You need to determine which tasks can run in parallel
-- You need to assign model routing (heavy complexity → strong model, mechanical complexity → fast model)
+- You need to assign model routing (complex complexity → strong model, mechanical and moderate complexity → fast model)
 - You need to define verification gates before tasks are executed
 - You need rollback strategies per execution window
 
@@ -35,7 +35,7 @@ Start with `plan.md` from superspec-plan. Extract:
 - All tasks (T001, T002, ...)
 - Task descriptions and requirements
 - Dependency constraints (which tasks block which)
-- Complexity classification for each task (`heavy` or `mechanical`)
+- Complexity classification for each task (`complex`, `moderate`, or `mechanical`)
 - Acceptance scenarios for each task
 
 Build a dependency graph showing:
@@ -63,14 +63,17 @@ Example:
 ### 3. Route by Complexity
 
 For each task, apply the model-routing rule:
-- **`complexity: "heavy"`** → route to `strong` model
+- **`complexity: "complex"`** → route to `strong` model
   - Examples: schema design, API architecture, component state management, backward-compatibility analysis
   - Rationale: Requires reasoning about system-wide implications, trade-offs, edge cases
+- **`complexity: "moderate"`** → route to `fast` model
+  - Examples: multi-file refactoring, straightforward feature enhancement, moderate state changes
+  - Rationale: Structured work with clear scope; requires coordination but not design judgment
 - **`complexity: "mechanical"`** → route to `fast` model
   - Examples: test scaffolding, seed scripts, boilerplate setup, deterministic transformations
   - Rationale: Follows a clear pattern; minimal ambiguity about intent
 
-**Model-routing function:** `routeModel(complexity) → complexity === "heavy" ? "strong" : "fast"` (any non-`"heavy"` complexity, including `"mechanical"`, routes to `"fast"`)
+**Model-routing function:** `routeModel(complexity) → complexity === "complex" ? "strong" : "fast"` (any non-`"complex"` complexity, including `"mechanical"` and `"moderate"`, routes to `"fast"`)
 
 Assign model routing to each task individually, then summarize by window (all tasks in a window may use different models, but you group them because they have no dependencies).
 
@@ -136,7 +139,7 @@ Write output file `execution-map.md` with these sections:
 
 3. **Model Routing:**
    - Tabular list: Task | Complexity | Model Class | Rationale
-   - Summary line: `routeModel(complexity) → complexity === "heavy" ? "strong" : "fast"` (any non-`"heavy"` complexity, including `"mechanical"`, routes to `"fast"`)
+   - Summary line: `routeModel(complexity) → complexity === "complex" ? "strong" : "fast"` (any non-`"complex"` complexity, including `"mechanical"` and `"moderate"`, routes to `"fast"`)
 
 4. **Personas:**
    - Tabular list: Window | Primary Persona | Secondary Persona | Responsibilities
@@ -154,8 +157,8 @@ All tables must be properly markdown-formatted. All references to tasks use T###
 
 ## Common Mistakes
 
-**❌ Wrong model routing:** Assigning `heavy` to deterministic scaffolding (should be `mechanical`)
-**✅ Correct:** Reserve `heavy` for design/reasoning decisions; `mechanical` for deterministic execution
+**❌ Wrong model routing:** Assigning `complex` to deterministic scaffolding (should be `mechanical`)
+**✅ Correct:** Reserve `complex` for design/reasoning decisions; `moderate` for structured multi-file work; `mechanical` for deterministic execution
 
 **❌ Overlapping windows:** Putting dependent tasks in the same window
 **✅ Correct:** Dependent tasks go in sequential windows (T001 in W1, T002 in W2)
@@ -180,21 +183,21 @@ All tables must be properly markdown-formatted. All references to tasks use T###
 
 **Input (plan.md excerpt):**
 ```
-T001: Backend schema migration [complexity: heavy] → T002, T004
+T001: Backend schema migration [complexity: complex] → T002, T004
 T002: Seed test data [complexity: mechanical] → T003
 T003: Service layer tests [complexity: mechanical] → (none)
-T004: API endpoints [complexity: heavy] → T005
+T004: API endpoints [complexity: complex] → T005
 T005: Integration tests [complexity: mechanical] → (none)
 T006: Frontend setup [complexity: mechanical] → T007
-T007: Frontend components [complexity: heavy] → (none)
+T007: Frontend components [complexity: complex] → (none)
 ```
 
 **Output (execution-map.md):**
 - **Dependency DAG:** T001→T002→T003; T001→T004→T005; T006→T007 (three independent chains)
 - **Windows:**
-  - W1: T001 (schema) | heavy → strong
+  - W1: T001 (schema) | complex → strong
   - W2: T002 (seed data), T006 (frontend setup) | mechanical → fast
-  - W3: T003, T004, T007 | mixed (T004 heavy→strong; T003, T007 routed per complexity)
+  - W3: T003, T004, T007 | mixed (T004 complex→strong; T003, T007 routed per complexity)
   - W4: T005 (integration tests) | mechanical → fast
   - W5: Quality gates | mechanical → fast
 - **Model Routing:** T001, T004, T007 → strong; T002, T003, T005, T006 → fast
@@ -216,7 +219,7 @@ Before handing off to superspec-forge:
 1. **Dependency DAG is acyclic:** No circular dependencies
 2. **Windows respect dependencies:** No task in W(n) depends on a task in W(n+1) or later
 3. **No shared state within window:** Re-check if multiple tasks edit same file
-4. **Model routing is consistent:** All `heavy` tasks → `strong`; all `mechanical` tasks → `fast`
+4. **Model routing is consistent:** All `complex` tasks → `strong`; all `mechanical` and `moderate` tasks → `fast`
 5. **Personas are assigned:** Every window has a primary persona
 6. **Gates are testable:** Every gate has measurable criteria (not "looks good")
 7. **Rollback is complete:** Every window has a concrete rollback procedure

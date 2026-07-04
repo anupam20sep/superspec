@@ -47,7 +47,7 @@ digraph process {
     "Read execution map / plan, note global constraints" [shape=box];
     "Select next task (nextTask)" [shape=box];
     "Ready task returned?" [shape=diamond];
-    "Route task by complexity (mechanical->fast, heavy->strong)" [shape=box];
+    "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" [shape=box];
     "Dispatch implementer subagent (red-green-refactor, zero prior context)" [shape=box];
     "Implementer asks questions?" [shape=diamond];
     "Answer questions, provide context" [shape=box];
@@ -65,7 +65,7 @@ digraph process {
 
     "Read execution map / plan, note global constraints" -> "Select next task (nextTask)";
     "Select next task (nextTask)" -> "Ready task returned?";
-    "Ready task returned?" -> "Route task by complexity (mechanical->fast, heavy->strong)" [label="yes"];
+    "Ready task returned?" -> "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" [label="yes"];
     "Ready task returned?" -> "Call forge-status" [label="no (blocked/none left)"];
     "Route task by complexity (mechanical->fast, heavy->strong)" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
     "Dispatch implementer subagent (red-green-refactor, zero prior context)" -> "Implementer asks questions?";
@@ -104,7 +104,8 @@ An implementer that skips straight to code without a red step, or that reports s
 Route every task through `route-model` before dispatch. The rule is mechanical, not judgment-based:
 
 - **`complexity: "mechanical"`** (isolated functions, clear specs, deterministic transformations) -> fast model.
-- **`complexity: "heavy"`** (multi-file coordination, design judgment, system-wide implications) -> strong model.
+- **`complexity: "moderate"`** (multi-file refactoring, straightforward feature work, structured changes) -> fast model.
+- **`complexity: "complex"`** (multi-file coordination, design judgment, system-wide implications) -> strong model.
 
 Apply the same rule to the reviewer: a small mechanical diff does not need the strongest model to review; a heavy task's diff does.
 

@@ -31,9 +31,9 @@ Windows define groups of tasks that can execute concurrently. No two tasks in a 
 
 | Window | Tasks | Model Routing | Parallelization Boundary |
 |--------|-------|-------|---------|
-| **W1: Schema & Structure** | T001 (schema migration) | `heavy` → strong | Schema migration sets the stage; cannot parallelize with dependent tasks. |
+| **W1: Schema & Structure** | T001 (schema migration) | `complex` → strong | Schema migration sets the stage; cannot parallelize with dependent tasks. |
 | **W2: Data Layer** | T002 (seed data), T006 (frontend setup) | `mechanical` → fast | Data seeding and frontend setup have no shared writes and no dependencies. ⚠️ Do NOT parallelize T002 with T003 (service tests); T003 needs T002's fixtures first. |
-| **W3: API & Frontend** | T004 (API endpoints), T007 (frontend components) | `heavy` → strong | API work has no dependency on frontend; T007 requires T006 (W2) to have completed first, so W3 cannot start before W2 finishes. Within W3, T004 and T007 are independent of each other and may run in parallel. |
+| **W3: API & Frontend** | T004 (API endpoints), T007 (frontend components) | `complex` → strong | API work has no dependency on frontend; T007 requires T006 (W2) to have completed first, so W3 cannot start before W2 finishes. Within W3, T004 and T007 are independent of each other and may run in parallel. |
 | **W4: Testing & Integration** | T003 (service layer tests), T005 (integration tests) | `mechanical` → fast | Unit-level service tests and full integration tests can run together after data/API layers are ready. |
 | **W5: Quality Gates** | All verification checks (coverage, lint, type safety) | `mechanical` → fast | Run after all development windows complete. |
 
@@ -48,15 +48,15 @@ Task complexity determines which model handles the work:
 
 | Task | Complexity | Model Class | Rationale |
 |------|-----------|------------|-----------|
-| T001: Schema migration | `heavy` | `strong` | Complex data model changes; requires reasoning about backward compatibility and performance. |
+| T001: Schema migration | `complex` | `strong` | Complex data model changes; requires reasoning about backward compatibility and performance. |
 | T002: Seed test data | `mechanical` | `fast` | Deterministic; follows a script. No ambiguity about intent. |
 | T003: Service layer tests | `mechanical` | `fast` | Straightforward test writing given a clear service interface. |
-| T004: API endpoint implementation | `heavy` | `strong` | Requires design decisions (routing, error handling, middleware order, rate limiting strategy). |
+| T004: API endpoint implementation | `complex` | `strong` | Requires design decisions (routing, error handling, middleware order, rate limiting strategy). |
 | T005: Integration tests | `mechanical` | `fast` | Once API is defined, tests are deterministic. |
 | T006: Frontend setup | `mechanical` | `fast` | Scaffolding and boilerplate setup. |
-| T007: Frontend components | `heavy` | `strong` | Component design, state management, accessibility requirements. |
+| T007: Frontend components | `complex` | `strong` | Component design, state management, accessibility requirements. |
 
-**Model Class Mapping:** `routeModel(complexity) → { "heavy" → "strong", "mechanical" → "fast" }`
+**Model Class Mapping:** `routeModel(complexity) → complexity === "complex" ? "strong" : "fast"` (mechanical and moderate both route to fast; only complex routes to strong)
 
 ## Personas
 
