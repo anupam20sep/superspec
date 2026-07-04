@@ -25,6 +25,8 @@ A unified **design artifact** (`specs/{{FEATURE}}/design.md`) that merges Spec K
 
 Governance gates (TDD, traceability, constitution checks) are defined in the separate `constitution.md` tier and enforced by `superspec-validate`, not inline here.
 
+This skill does not produce a standalone quickstart/validation-scenario document; end-to-end acceptance scenarios live in `spec.md`'s Given/When/Then user stories, and runtime verification is `superspec-validate`'s responsibility.
+
 ---
 
 ## Workflow
