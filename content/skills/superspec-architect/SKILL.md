@@ -96,7 +96,7 @@ In the **Architecture** section:
    ```
 
 2. **Project Structure**: Document the directory layout for this feature:
-   - Docs (specs/{{FEATURE}}/spec.md, design.md, tasks.md, adr/)
+   - Docs (specs/{{FEATURE}}/spec.md, design.md, plan.md, adr/)
    - Source code (backend src/, frontend src/, etc.)
    - Tests (unit, integration, contract)
 
@@ -247,7 +247,7 @@ Once `design.md` is complete and approved:
 1. **Review for decisions**: Ensure all ADRs are clear and decisions are justified.
 2. **Invoke `superspec-plan`**: Hand off to the task-breakdown stage to decompose the design into implementation tasks.
 
-The `superspec-plan` skill will read `design.md` and create `specs/{{FEATURE}}/tasks.md`, breaking down the architecture into TDD-driven implementation tasks.
+The `superspec-plan` skill will read `design.md` and create `specs/{{FEATURE}}/plan.md`, breaking down the architecture into TDD-driven implementation tasks.
 
 ---
 
