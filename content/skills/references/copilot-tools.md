@@ -8,13 +8,13 @@ This reference maps generic SuperSpec actions to GitHub Copilot's actual tools a
 |--------|-------------------|----------------|-------|
 | **Dispatch a subagent for an isolated task** | Agent mode (single thread, no isolation) | N/A — built-in to Copilot Chat | Copilot Chat in VS Code has Agent mode for autonomous work, but it runs in a single continuous thread with no isolated subagent-dispatch primitive. See "Fallback Pattern" below for how to simulate parallel subagent work. |
 | **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec/core) | MCP tool via configured server | `.vscode/mcp.json` in project root | Copilot can be configured to use MCP servers defined in `.vscode/mcp.json`. Tools from registered MCP servers become available in the Agent conversation. |
-| **Invoke a skill or command** | Prompt files (reference) | `.github/prompts/*.prompt.md` | Copilot Chat supports prompt files in `.github/prompts/`. These are invocable via `@prompt <filename>` syntax in the chat. No native skill dispatch equivalent to Claude Code's Skill tool — use prompt files as a workaround for reusable task templates. |
+| **Invoke a skill or command** | Prompt files (reference) | `.github/prompts/*.prompt.md` | Copilot Chat supports prompt files in `.github/prompts/`. Check your version's documentation for the exact invocation syntax. No native skill dispatch equivalent to Claude Code's Skill tool — use prompt files as a workaround for reusable task templates. |
 | **Apply always-on instructions** | Copilot Instructions | `.github/copilot-instructions.md` | This file is automatically loaded by Copilot and applied to all conversations in the repository. Use it for project-wide conventions, architectural guidelines, and standing instructions (equivalent to a global `.claude/CLAUDE.md`). |
 | **Track task or todo state** | Comments in code / GitHub Issues | `.github/ISSUE_TEMPLATE/` or markdown files in repo | Copilot does not have a native todo-tracking tool. Use GitHub Issues, code comments, or markdown files in the repository for task tracking. |
 | **Read a file** | Built-in file reference via `#file` or opening in editor | N/A — automatic | Copilot can read any file you reference with `#file` or have open in VS Code. Context includes the file contents. |
-| **Write or create a file** | Suggest edits / copy-paste results | N/A — manual | Copilot Chat cannot directly write files. Instead, it generates code suggestions that you apply via "Accept" or copy-paste into your editor. Use VS Code's built-in edit capabilities to apply changes. |
+| **Write or create a file** | Agent mode (autonomous with approval) | N/A — built-in to Copilot Chat | Copilot Agent mode can autonomously create and write files. When performing file operations, Copilot will create or modify files directly, and you review/approve the changes. |
 | **Edit a file in place** | Inline edits via Copilot Edit | N/A — built-in | Copilot's Edit feature (in VS Code) allows inline code suggestions. Accept or reject edits directly. Not fully autonomous — requires user confirmation. |
-| **Run shell commands** | Terminal in VS Code (manual) | N/A | Copilot can suggest bash commands, but cannot execute them autonomously. You must copy the command into VS Code's integrated terminal and run it manually. |
+| **Run shell commands** | Agent mode (autonomous with approval) | N/A — built-in to Copilot Chat | Copilot Agent mode can autonomously execute terminal commands, but each command execution requires your explicit approval/confirmation before it runs (a permission gate, not a suggestion-only model). This is analogous to Claude Code's Bash tool with permission prompts. |
 | **Web fetch or search** | Suggest curl/fetch commands | N/A | Copilot can suggest curl or fetch code, but cannot execute web requests autonomously. You would need to run suggested commands or write code to execute them in your app. |
 
 ## Patterns for Common Superspec Tasks
@@ -53,7 +53,7 @@ If registered in `.vscode/mcp.json`, reference the tool in your Agent conversati
 @copilot Please call the forge-status MCP tool to report current task execution...
 ```
 
-Copilot will use the tool if available, but you may need to manually confirm or retry if the tool call fails (Copilot does not have automatic retry logic for tool failures).
+Copilot will use the tool if available, but you may need to manually confirm or retry if the tool call fails (check your version for automatic retry logic capabilities).
 
 ### Using prompt files as reusable task templates
 Create `.github/prompts/` directory and define task prompts:
@@ -90,14 +90,14 @@ Create `.github/copilot-instructions.md`:
 Copilot applies these automatically to all conversations.
 
 ### File operations in task workflows
-Since Copilot cannot directly write files, the workflow is:
+Copilot Agent mode can autonomously write and edit files. The workflow is:
 
 1. **Reference** files with `#file` or by having them open.
-2. **Generate** code suggestions or edits.
-3. **Manual apply**: Accept edits in VS Code or copy-paste code into files.
-4. **Run tests** or validation manually in the integrated terminal.
+2. **Generate** and apply edits directly to files.
+3. **Review changes**: Copilot will show you what files were modified and the diffs; you confirm they're correct.
+4. **Run tests** or validation in the integrated terminal (with approval gate for each command).
 
-This breaks the automation flow of fully autonomous development but allows Copilot to guide you through the process.
+This allows Copilot to perform autonomous file operations while keeping you in control of what gets executed.
 
 ## Fallback Patterns for Subagent Tasks
 
@@ -134,8 +134,7 @@ This is considerably slower than Claude Code's parallel subagent dispatch, but i
 
 - **No isolated subagent dispatch:** All work is in a single Agent thread. Cannot spawn fresh contexts for specific tasks.
 - **No background task execution:** Agent must complete within the chat window; cannot run tasks in parallel.
-- **No file write capability:** Copilot suggests edits; you must apply them manually.
-- **No autonomous terminal execution:** Copilot can suggest commands, but you must copy-paste and run them.
+- **Terminal execution approval gate:** Terminal commands require explicit user approval before execution (not manual copy-paste, but not silent auto-execution either).
 - **No dynamic MCP reload:** Update `.vscode/mcp.json` and restart VS Code to pick up new servers.
 - **Manual result transfer:** Switching between tasks requires copy-pasting conversation results between chat threads.
 
