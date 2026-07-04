@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "superspec": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/packages/core/dist/mcp-server.js"]
+    }
+  }
+}
