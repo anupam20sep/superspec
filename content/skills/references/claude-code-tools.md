@@ -6,7 +6,7 @@ This reference maps generic SuperSpec actions to Claude Code's actual tools and 
 
 | Action | Claude Code Tool | Configuration | Notes |
 |--------|------------------|----------------|-------|
-| **Dispatch a subagent for an isolated task** | `Agent` tool | N/A — built-in | Spawns a fresh agent with dedicated context and full tool access. Can specify `subagent_type` for specialized agents (e.g., `code-reviewer`, `Plan`). Results return as a single message when complete. Use `run_in_background` to let tasks run in parallel while continuing work. |
+| **Dispatch a subagent for an isolated task** | `Agent` tool | N/A — built-in | Spawns a fresh agent with dedicated context and full tool access. Can specify `subagent_type` to select a specialized agent — the available types are session-specific, see below. Results return as a single message when complete. Use `run_in_background` to let tasks run in parallel while continuing work. |
 | **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec/core) | MCP tool via configured server | `.mcp.json` in project root | Claude Code reads `.mcp.json` at startup; register MCP servers there and their tools become available in your context. No dynamic reload — update config and restart. |
 | **Invoke a skill or command** | `Skill` tool | Installed skill via `~/.claude/skills/` or project `.claude/skills/` | Loads a SKILL.md file and executes its logic. Can be invoked with `args` for parameterization. Skill content defines the behavior; Claude Code provides the dispatch mechanism. |
 | **Track task or todo state** | `TodoWrite` tool | N/A — built-in | Create, read, or update tasks in an internal todo list. Survives across conversation turns within a session. |
@@ -15,7 +15,7 @@ This reference maps generic SuperSpec actions to Claude Code's actual tools and 
 | **Edit a file in place** | `Edit` tool | N/A — built-in | Perform exact string replacements in a file. More efficient than Write for partial changes. Must have read the file first. |
 | **Run shell commands** | `Bash` tool | N/A — built-in | Execute bash/zsh commands. Supports `run_in_background` for long-running tasks (you'll be notified on completion). Timeout: default 2 minutes, max 10 minutes. |
 | **Web fetch or search** | `WebFetch`, `WebSearch` (deferred) | N/A | Use `ToolSearch` to load deferred tools before calling. WebFetch retrieves full content; WebSearch queries the web. |
-| **Launch a specialized agent** | `Agent` with `subagent_type` | N/A — built-in | Options: `claude` (general), `claude-code-guide` (Claude Code/API questions), `Explore` (code search), `Plan` (architecture), `code-reviewer`, `verify`, etc. Check agent availability in system reminders. |
+| **Launch a specialized agent** | `Agent` with `subagent_type` | N/A — built-in | The set of available `subagent_type` values is session- and project-specific, not a fixed global list — it always includes a general-purpose type and typically an `Explore` (code search) and `Plan` (architecture) type, but the full list must be read from the current session's system reminders before dispatching, not assumed from memory. |
 
 ## Patterns for Common Superspec Tasks
 
