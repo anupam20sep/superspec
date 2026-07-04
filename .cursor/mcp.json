@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "superspec": { "command": "node", "args": ["${workspaceFolder}/packages/core/dist/mcp-server.js"] }
+  }
+}
