@@ -2,6 +2,10 @@
   "name": "@superspec/render",
   "version": "0.1.0",
   "type": "module",
+  "main": "./dist/skill-reader.js",
+  "exports": {
+    ".": "./dist/skill-reader.js"
+  },
   "bin": { "superspec-render": "./dist/cli.js" },
   "scripts": { "build": "tsc -b" }
 }
