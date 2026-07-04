@@ -8,6 +8,7 @@ import { lintPlan } from "./plan-lint.js";
 import { routeModel } from "./model-router.js";
 import { scaffold } from "./scaffold.js";
 import { initState, forgeStatus } from "./forge-loop.js";
+import { discoverPersonas } from "./persona-discovery.js";
 
 interface ToolContent {
   content: { type: "text"; text: string }[];
@@ -60,6 +61,19 @@ export function buildToolDefinitions(): ToolDef[] {
       description: "Report forge completion status for a set of plan tasks (fresh state).",
       schema: { planText: z.string() },
       handler: async (args) => json(forgeStatus(initState(parsePlan(args.planText as string)))),
+    },
+    {
+      name: "list-personas",
+      description:
+        "List specialized sub-agent personas discovered in the target project's .claude/agents and .cursor/agents directories.",
+      schema: { claudeAgentsDir: z.string().optional(), cursorAgentsDir: z.string().optional() },
+      handler: async (args) =>
+        json(
+          await discoverPersonas({
+            claude: args.claudeAgentsDir as string | undefined,
+            cursor: args.cursorAgentsDir as string | undefined,
+          }),
+        ),
     },
   ];
 }

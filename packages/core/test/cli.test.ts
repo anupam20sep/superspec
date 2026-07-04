@@ -84,3 +84,27 @@ describe("runCli unknown command", () => {
     expect(stdout).toMatch(/unknown command/i);
   });
 });
+
+describe("runCli list-personas", () => {
+  it("prints discovered personas from --claude-agents-dir", async () => {
+    const dir = join(root, ".claude", "agents");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "backend-developer.md"),
+      "---\nname: backend-developer\ndescription: Server-side work.\n---\n\nBody\n",
+      "utf8",
+    );
+
+    const { code, stdout } = await runCli(["list-personas", "--claude-agents-dir", dir]);
+    expect(code).toBe(0);
+    const personas = JSON.parse(stdout);
+    expect(personas).toHaveLength(1);
+    expect(personas[0].name).toBe("backend-developer");
+  });
+
+  it("returns [] when no flags are given at all", async () => {
+    const { code, stdout } = await runCli(["list-personas"]);
+    expect(code).toBe(0);
+    expect(JSON.parse(stdout)).toEqual([]);
+  });
+});

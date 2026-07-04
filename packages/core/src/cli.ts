@@ -5,6 +5,7 @@ import { parsePlan } from "./plan-parser.js";
 import { buildMatrix, matrixGaps } from "./matrix.js";
 import { lintPlan } from "./plan-lint.js";
 import { scaffold } from "./scaffold.js";
+import { discoverPersonas } from "./persona-discovery.js";
 
 export interface CliResult {
   code: number;
@@ -77,7 +78,26 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
     }
   }
 
-  return { code: 0, stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold` };
+  if (command === "list-personas") {
+    const { values } = parseArgs({
+      args: rest,
+      options: { "claude-agents-dir": { type: "string" }, "cursor-agents-dir": { type: "string" } },
+    });
+    try {
+      const personas = await discoverPersonas({
+        claude: values["claude-agents-dir"] as string | undefined,
+        cursor: values["cursor-agents-dir"] as string | undefined,
+      });
+      return { code: 0, stdout: JSON.stringify(personas, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
+  return {
+    code: 0,
+    stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold | list-personas`,
+  };
 }
 
 async function main(): Promise<void> {

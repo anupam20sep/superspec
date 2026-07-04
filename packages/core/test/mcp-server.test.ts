@@ -1,11 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { z } from "zod";
 import { buildToolDefinitions } from "../src/mcp-server.js";
 
 describe("MCP tool definitions", () => {
   it("exposes the expected tool names", () => {
     const names = buildToolDefinitions().map((t) => t.name).sort();
-    expect(names).toEqual(["build-matrix", "forge-status", "lint-plan", "route-model", "scaffold"].sort());
+    expect(names).toEqual(
+      ["build-matrix", "forge-status", "lint-plan", "list-personas", "route-model", "scaffold"].sort(),
+    );
   });
 
   it("build-matrix handler returns matrix + gaps as JSON text", async () => {
@@ -35,5 +40,48 @@ describe("MCP tool definitions", () => {
     const schema = z.object(tool.schema);
     expect(() => schema.parse({ complexity: "moderate" })).not.toThrow();
     expect(() => schema.parse({ complexity: "complex" })).not.toThrow();
+  });
+});
+
+describe("list-personas MCP tool", () => {
+  let root: string;
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "superspec-mcp-persona-"));
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("discovers personas from claude and cursor agents dirs", async () => {
+    const claudeDir = join(root, ".claude", "agents");
+    const cursorDir = join(root, ".cursor", "agents");
+    await mkdir(claudeDir, { recursive: true });
+    await mkdir(cursorDir, { recursive: true });
+    await writeFile(
+      join(claudeDir, "backend-developer.md"),
+      "---\nname: backend-developer\ndescription: Server-side work.\n---\n\nBody",
+      "utf8",
+    );
+    await writeFile(
+      join(cursorDir, "frontend-developer.md"),
+      "---\nname: frontend-developer\ndescription: UI work.\n---\n\nBody",
+      "utf8",
+    );
+
+    const tool = buildToolDefinitions().find((t) => t.name === "list-personas")!;
+    const res = await tool.handler({ claudeAgentsDir: claudeDir, cursorAgentsDir: cursorDir });
+    const payload = JSON.parse(res.content[0].text);
+
+    expect(payload).toHaveLength(2);
+    expect(payload.map((p: { name: string }) => p.name).sort()).toEqual([
+      "backend-developer",
+      "frontend-developer",
+    ]);
+  });
+
+  it("returns [] when called with no args", async () => {
+    const tool = buildToolDefinitions().find((t) => t.name === "list-personas")!;
+    const res = await tool.handler({});
+    expect(JSON.parse(res.content[0].text)).toEqual([]);
   });
 });
