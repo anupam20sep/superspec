@@ -206,6 +206,9 @@ If any gate is unsigned or failing: **STOP and document the gap.**
 
 ### Final Status
 **FEATURE READY FOR RELEASE**
+
+### Next Action
+→ superspec-ship: Validation is clean. Proceed to decide how to integrate this work (merge, PR, keep, or discard).
 ```
 
 **If verification fails:**
