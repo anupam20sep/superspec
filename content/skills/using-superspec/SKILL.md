@@ -25,10 +25,10 @@ Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it h
 
 ## Skill Priority
 
-When multiple skills apply, process skills come first — they set the approach, then implementation skills carry it out. superspec-explore and superspec-refine are SuperSpec's most common process skills, but the rule holds for any of them.
+When multiple skills apply, process skills come first — they set the approach, then implementation skills carry it out. superspec-explore is SuperSpec's most common process skill, but the rule holds for any of them.
 
 - "Let's build X" → superspec-explore first, then implementation skills.
-- "Fix this bug" → superspec-refine first, then domain skills.
+- "This spec is ambiguous" → superspec-refine first, then continue the lifecycle.
 
 ## Red Flags
 
