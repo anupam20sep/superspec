@@ -1,0 +1,5 @@
+---
+description: SuperSpec spec-driven + TDD workflow
+alwaysApply: true
+---
+This project uses SuperSpec. Before writing code, follow the `using-superspec` skill and the lifecycle: explore → scope → refine → architect → plan → route → forge → validate → ship. Use the superspec MCP tools (build-matrix, lint-plan, route-model, forge-status) for validation.
