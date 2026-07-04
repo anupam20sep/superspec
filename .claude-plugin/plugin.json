@@ -1,0 +1,9 @@
+{
+  "name": "superspec",
+  "displayName": "SuperSpec",
+  "version": "0.1.0",
+  "description": "Spec-driven + TDD-driven AI development: specify, design, plan, orchestrate, forge, validate.",
+  "author": { "name": "SuperSpec contributors" },
+  "license": "MIT",
+  "keywords": ["sdd", "tdd", "planning", "subagents", "spec-driven"]
+}
