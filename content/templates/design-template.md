@@ -42,6 +42,13 @@
 
 [Describe the high-level system architecture: major components, their responsibilities, and how they interact. Reference the selected project structure below.]
 
+<!--
+  NOTE: Governance gates (mandatory TDD, traceability completeness, etc.) are defined
+  in the separate constitution.md tier document and enforced by the superspec-validate
+  stage, not inline here. This design.md focuses purely on architecture, decisions,
+  data model, and contracts.
+-->
+
 ### Project Structure
 
 #### Documentation (this feature)
@@ -138,7 +145,6 @@ Example: PostgreSQL provides ACID compliance, supports complex relational schema
 | Entity | Fields | Primary Key | Relationships | Notes |
 |--------|--------|-------------|---------------|-------|
 | [Entity name] | [e.g., id, name, created_at] | [PK] | [e.g., has_many: items; belongs_to: user] | [domain notes] |
-| | | | | |
 
 Or, for simpler schemas, describe inline:
 
