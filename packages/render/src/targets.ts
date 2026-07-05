@@ -18,15 +18,15 @@ function skillFile(outRoot: string, subdir: string, name: string, skill: Skill):
   };
 }
 
-export const claudeTarget: Target = {
-  name: "claude",
+// Single output layout: repo-root `skills/` (same as obra/superpowers).
+// Claude Code and Cursor's `.cursor-plugin/plugin.json` both consume this path.
+export const skillsTarget: Target = {
+  name: "skills",
   render: (skill, outRoot) => [skillFile(outRoot, "skills", skill.name, skill)],
 };
 
-export const cursorTarget: Target = {
-  name: "cursor",
-  render: (skill, outRoot) => [skillFile(outRoot, ".cursor/skills", skill.name, skill)],
-};
+/** @deprecated Use skillsTarget — kept as alias for existing imports/tests. */
+export const claudeTarget = skillsTarget;
 
 // NOTE: a `copilotTarget` following this exact same Target interface will be added here when
 // GitHub Copilot support is picked up (deferred plan). Its shape is already proven by the
@@ -35,4 +35,4 @@ export const cursorTarget: Target = {
 // `.github/copilot-instructions.md`. No other file in this module needs to change to add it —
 // just add the target object and append it to INTEGRATION_REGISTRY below.
 
-export const INTEGRATION_REGISTRY: Target[] = [claudeTarget, cursorTarget];
+export const INTEGRATION_REGISTRY: Target[] = [skillsTarget];

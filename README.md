@@ -230,7 +230,7 @@ SuperSpec can discover specialized sub-agent personas already defined in your ow
 
 ### Render/sync tooling (`@superspec-dev/render`)
 
-Skills are authored once, in `content/skills/`, in platform-neutral prose. `@superspec-dev/render` renders that single source into each tool's own file layout (`skills/` for Claude Code, `.cursor/skills/` for Cursor) — edit a skill in `content/skills/` and run `npm run render` to propagate the change everywhere. [docs/acceptance/render-fidelity.md](docs/acceptance/render-fidelity.md) shows this working end to end on a real edit.
+Skills are authored once in `content/skills/`, then rendered to repo-root `skills/` via `npm run render`. Both Claude Code and the Cursor plugin manifest (`.cursor-plugin/plugin.json`) point at `skills/` — the same layout as [obra/superpowers](https://github.com/obra/superpowers). Edit `content/skills/`, run `npm run render`, commit `skills/`, and push; no separate Cursor copy.
 
 ## Using SuperSpec on your own project
 
@@ -280,7 +280,7 @@ That runs `lint --spec`, `lint --design`, `lint --plan`, `matrix`, and the examp
 ```bash
 npm install
 npm run build              # tsc -b — builds packages/core and packages/render
-npm run render             # sync content/skills → skills/ + .cursor/skills/
+npm run render             # sync content/skills → skills/
 npm test                   # full test suite (89 tests)
 npm run dogfood:url-shortener   # validation ladder on the worked example
 ```

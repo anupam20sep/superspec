@@ -31,10 +31,8 @@ fi
 
 echo
 echo "== Cursor =="
-echo "No install step required today: Cursor auto-discovers .cursor/skills/, .cursor/rules/, and .cursor/mcp.json"
-echo "the moment this repo is opened as a workspace folder. Just open: $REPO_ROOT"
-echo "(A .cursor-plugin/plugin.json manifest is also present for Cursor's own plugin packaging, for when"
-echo "that mechanism is used instead of folder auto-discovery.)"
+echo "Install via /add-plugin superspec (or URL). Skills ship from ./skills/ per .cursor-plugin/plugin.json — same layout as obra/superpowers."
+echo "Local dev: open this repo as a workspace; hooks load from hooks/hooks-cursor.json via the plugin manifest."
 echo
 echo "== GitHub Copilot =="
 echo "Deferred for now. When added: Copilot needs no install script at all, same as Cursor's file-based"

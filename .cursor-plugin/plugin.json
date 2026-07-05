@@ -1,9 +1,9 @@
 {
   "name": "superspec",
   "displayName": "SuperSpec",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Spec-driven + TDD-driven AI development for Cursor.",
   "license": "MIT",
-  "skills": "./.cursor/skills/",
+  "skills": "./skills/",
   "hooks": "./hooks/hooks-cursor.json"
 }
