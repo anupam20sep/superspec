@@ -140,14 +140,11 @@ since this doc was written:
 git remote -v
 ```
 
-Then, using your own GitHub account:
-
-1. Create a new **public** repository on GitHub (name and account are your call —
-   nothing here assumes a specific username or repo name).
-2. Add it as the `origin` remote and push:
+Create `https://github.com/anupam20sep/superspec` (public), then add it as the
+`origin` remote and push:
 
 ```bash
-git remote add origin <your-github-repo-url>
+git remote add origin https://github.com/anupam20sep/superspec.git
 git push -u origin <your-current-branch>
 ```
 
@@ -155,29 +152,13 @@ Check your actual current branch name first with `git branch --show-current`
 (at the time this doc was written, the working branch was `dev`, not `master` —
 don't assume either name, use whatever `git branch --show-current` reports).
 
-## 7. Update the placeholder `repository` fields and republish a patch
+## 7. Confirm the `repository` fields match the real repo
 
-Both `packages/core/package.json` and `packages/render/package.json` currently
-have a literal placeholder in their `repository.url` field:
-
-```json
-"repository": {
-  "type": "git",
-  "url": "TBD - set after creating the public GitHub repo"
-}
-```
-
-Once the real GitHub URL exists (step 6), update both files to point at it, e.g.:
-
-```json
-"repository": {
-  "type": "git",
-  "url": "git+https://github.com/<your-org-or-user>/<your-repo>.git"
-}
-```
-
-Then cut a patch release of both packages so the registry metadata doesn't stay
-stuck with the placeholder string forever:
+Both `packages/core/package.json` and `packages/render/package.json` already have
+their `repository.url` field set to `git+https://github.com/anupam20sep/superspec.git`
+(no longer a placeholder). If the repo ends up somewhere else, update both files to
+match before publishing (step 3/4), or — if you've already published once with the
+wrong URL — cut a patch release afterward:
 
 ```bash
 cd packages/render && npm version patch && npm publish --access public

@@ -9,4 +9,4 @@ The shared engine behind SuperSpec's spec-driven + TDD-driven lifecycle tools. I
 
 It depends on `@superspec/render` (not yet published to npm) to parse and render shared skill content.
 
-For full context on the SuperSpec methodology, installation, and usage, see the main SuperSpec repository's README and `docs/SOURCES.md` (repository URL not yet published — see this package's `repository` field, which is a placeholder until the public GitHub repo exists).
+For full context on the SuperSpec methodology, installation, and usage, see the main [SuperSpec repository](https://github.com/anupam20sep/superspec)'s README and `docs/SOURCES.md`.

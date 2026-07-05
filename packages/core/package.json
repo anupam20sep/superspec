@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "TBD - set after creating the public GitHub repo"
+    "url": "git+https://github.com/anupam20sep/superspec.git"
   },
   "main": "./dist/index.js",
   "bin": { "superspec": "./dist/cli.js" },
