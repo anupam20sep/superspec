@@ -1,6 +1,6 @@
 {
   "name": "@superspec-dev/core",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Shared engine behind SuperSpec's spec-driven + TDD-driven lifecycle tools — exposes an MCP server and CLI for matrix, lint, scaffold, and persona discovery.",
   "type": "module",
   "license": "MIT",
