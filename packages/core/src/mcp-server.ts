@@ -93,12 +93,12 @@ export function createServer(): McpServer {
   return server;
 }
 
-async function main(): Promise<void> {
+export async function runMcpServer(): Promise<void> {
   const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
 
 if (process.argv[1] && process.argv[1].endsWith("mcp-server.js")) {
-  void main();
+  void runMcpServer();
 }

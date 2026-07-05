@@ -6,6 +6,7 @@ import { buildMatrix, matrixGaps } from "./matrix.js";
 import { lintPlan } from "./plan-lint.js";
 import { scaffold } from "./scaffold.js";
 import { discoverPersonas } from "./persona-discovery.js";
+import { runMcpServer } from "./mcp-server.js";
 
 export interface CliResult {
   code: number;
@@ -22,6 +23,16 @@ export async function runCli(argv: string[]): Promise<CliResult> {
 
 async function runCliInner(argv: string[]): Promise<CliResult> {
   const [command, ...rest] = argv;
+
+  if (command === "mcp") {
+    // Long-running: connects the MCP server to stdio and never resolves in
+    // normal operation, unlike every other subcommand here which computes a
+    // result and returns. This mirrors mcp-server.ts's own direct-invocation
+    // behavior exactly (same createServer() + StdioServerTransport), just
+    // reachable via the single `superspec` bin instead of a dedicated file.
+    await runMcpServer();
+    return { code: 0, stdout: "" };
+  }
 
   if (command === "matrix") {
     const { values } = parseArgs({
@@ -96,7 +107,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
 
   return {
     code: 0,
-    stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold | list-personas`,
+    stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold | list-personas | mcp`,
   };
 }
 

@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runCli } from "../src/cli.js";
+import * as mcpServer from "../src/mcp-server.js";
 
 let root: string;
 beforeEach(async () => {
@@ -82,6 +83,19 @@ describe("runCli unknown command", () => {
     const { code, stdout } = await runCli(["frobnicate"]);
     expect(code).toBe(0);
     expect(stdout).toMatch(/unknown command/i);
+  });
+});
+
+describe("runCli mcp", () => {
+  it("wires the mcp command to the real runMcpServer from mcp-server.ts", async () => {
+    const spy = vi.spyOn(mcpServer, "runMcpServer").mockResolvedValue(undefined);
+    try {
+      const { code } = await runCli(["mcp"]);
+      expect(code).toBe(0);
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 
