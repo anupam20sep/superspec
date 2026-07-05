@@ -2,7 +2,7 @@
 
 **Scope:** GitHub Copilot is deferred (Plan #5b); this check covers the two currently-supported render targets, Claude Code (`skills/`) and Cursor (`.cursor/skills/`).
 
-**Expected:** a single edit in `content/skills/<name>/SKILL.md` propagates to both rendered outputs when `@superspec/render`'s CLI is re-run, and nowhere else.
+**Expected:** a single edit in `content/skills/<name>/SKILL.md` propagates to both rendered outputs when `@superspec-dev/render`'s CLI is re-run, and nowhere else.
 
 ## Procedure
 

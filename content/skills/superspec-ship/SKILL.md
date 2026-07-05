@@ -21,7 +21,7 @@ Guide completion of development work by confirming validation is clean, then pre
 
 1. Look for a recent `superspec-validate` report for this feature.
    - If one exists and its Final Status reads `COMPLETE` / `FEATURE READY FOR RELEASE` (all of: coverage matrix 0 gaps, plan quality 0 critical findings, Principle 1 and Principle 2 evidence confirmed, execution-map gates signed off): the gate passes. Continue to Step 1.
-   - If no recent report exists, or you cannot confirm it reflects the current state of the code: do not assume. Re-run the checks directly using the same tools `superspec-validate` uses — `build-matrix` and `lint-plan` from `@superspec/core` (see `packages/core/src/mcp-server.ts`) — and confirm 0 gaps from `build-matrix` and 0 critical findings from `lint-plan` before proceeding.
+   - If no recent report exists, or you cannot confirm it reflects the current state of the code: do not assume. Re-run the checks directly using the same tools `superspec-validate` uses — `build-matrix` and `lint-plan` from `@superspec-dev/core` (see `packages/core/src/mcp-server.ts`) — and confirm 0 gaps from `build-matrix` and 0 critical findings from `lint-plan` before proceeding.
 
 2. **If the last known state is NOT clean** — the matrix has gaps, or a Critical/Important gate failure was reported (Principle 1 or Principle 2 violation, or an execution-map gate unsigned/failing) — **STOP**. Do not present the finish menu. Report exactly what is failing, using the same categories `superspec-validate` reports (Coverage Gap, Plan Quality, Principle 1/2 Violation, Gate Failure), and point back to:
    - `superspec-forge` — if the gap is in implementation or plan (fix loop), or

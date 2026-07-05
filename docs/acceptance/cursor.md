@@ -27,7 +27,7 @@ TOOL_USE: updateTodosToolCall -> {'todos': [{'id': '1', 'content': 'Explore proj
 TOOL_USE: updateTodosToolCall -> {'todos': [{'id': '1', 'content': 'Explore project context — files, docs, recent commits', 'status': 'TODO_STATUS_COMPLETED', 'createdAt': '1783190421
 ASSISTANT TEXT: Using **superspec-explore** to shape the URL shortener idea.
 
-I've looked at the repo. **SuperSpec** is a spec-driven development framework (skills, MCP tools, `@superspec/core` package) — not an application codebase. There's no existing web app or URL shortener here; we'd be starting fresh.
+I've looked at the repo. **SuperSpec** is a spec-driven development framework (skills, MCP tools, `@superspec-dev/core` package) — not an application codebase. There's no existing web app or URL shortener here; we'd be starting fresh.
 
 **Where should we build it?**
 

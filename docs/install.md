@@ -31,7 +31,7 @@ The `.mcp.json` committed at the root of this repository (used by the SuperSpec 
 ```json
 {
   "mcpServers": {
-    "superspec": { "command": "npx", "args": ["-y", "@superspec/core", "mcp"] }
+    "superspec": { "command": "npx", "args": ["-y", "@superspec-dev/core", "mcp"] }
   }
 }
 ```
@@ -57,12 +57,12 @@ Separately from the plugin install above: any project can get SuperSpec's MCP to
 ```json
 {
   "mcpServers": {
-    "superspec": { "command": "npx", "args": ["-y", "@superspec/core", "mcp"] }
+    "superspec": { "command": "npx", "args": ["-y", "@superspec-dev/core", "mcp"] }
   }
 }
 ```
 
-This works regardless of where that project lives on disk, because `npx` resolves `@superspec/core` from the npm registry (or a local npm cache) rather than requiring a filesystem path into wherever this SuperSpec repository happens to be checked out. That's the key difference from the `.cursor/mcp.json` in *this* repository (shown above), which uses `${workspaceFolder}` and therefore only makes sense when the workspace folder is this repository itself.
+This works regardless of where that project lives on disk, because `npx` resolves `@superspec-dev/core` from the npm registry (or a local npm cache) rather than requiring a filesystem path into wherever this SuperSpec repository happens to be checked out. That's the key difference from the `.cursor/mcp.json` in *this* repository (shown above), which uses `${workspaceFolder}` and therefore only makes sense when the workspace folder is this repository itself.
 
 ## Adding GitHub Copilot (future)
 

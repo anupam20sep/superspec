@@ -1,7 +1,7 @@
 # Publishing runbook (maintainer-only)
 
 This is an internal checklist for whoever actually runs the first public release of
-SuperSpec — publishing `@superspec/core` and `@superspec/render` to the public npm
+SuperSpec — publishing `@superspec-dev/core` and `@superspec-dev/render` to the public npm
 registry, and pushing this repository to a public GitHub remote. It is **not**
 end-user install documentation (see [`docs/install.md`](./install.md) for that).
 
@@ -20,7 +20,7 @@ Work through the steps in order — several of them have a hard ordering depende
 
 ## 1. Confirm npm account and scope availability
 
-Confirm you're logged in to the npm account that will own the `@superspec` scope:
+Confirm you're logged in to the npm account that will own the `@superspec-dev` scope:
 
 ```bash
 npm whoami
@@ -28,22 +28,22 @@ npm whoami
 
 If that fails, run `npm login` first.
 
-Then check whether the `@superspec` scope/package names are actually available to
+Then check whether the `@superspec-dev` scope/package names are actually available to
 you, rather than assuming:
 
 ```bash
-npm view @superspec/core
-npm view @superspec/render
+npm view @superspec-dev/core
+npm view @superspec-dev/render
 ```
 
 - If both return `404 Not Found` (or similar "no such package"), the names are free
-  and you can publish under `@superspec/*` as this repo's `package.json` files
+  and you can publish under `@superspec-dev/*` as this repo's `package.json` files
   already assume.
 - If either command returns real package metadata (a version, description, etc.),
   someone else already owns that name/scope. In that case **stop** — you'll need to
-  either claim the `@superspec` org on npmjs.com under your own account first, or
+  either claim the `@superspec-dev` org on npmjs.com under your own account first, or
   pick a different scope/package name and update both `packages/core/package.json`
-  and `packages/render/package.json` (`name` field, and the `@superspec/render`
+  and `packages/render/package.json` (`name` field, and the `@superspec-dev/render`
   dependency range inside `packages/core/package.json`) before continuing. Do not
   guess at scope ownership — verify it here.
 
@@ -59,20 +59,20 @@ npx tsc -b packages/core packages/render
 This produces the `dist/` output that each package's `files: ["dist"]` field in
 `package.json` will actually publish (source `.ts` files are not shipped).
 
-## 3. Publish `@superspec/render` FIRST
+## 3. Publish `@superspec-dev/render` FIRST
 
 Order matters here. `packages/core/package.json` declares:
 
 ```json
 "dependencies": {
-  "@superspec/render": "^0.1.0",
+  "@superspec-dev/render": "^0.1.0",
   ...
 }
 ```
 
-If `@superspec/core` were published before `@superspec/render` exists on the
-registry, anyone running `npm install @superspec/core` in that window would get a
-dependency resolution failure (npm can't find `@superspec/render@^0.1.0` anywhere).
+If `@superspec-dev/core` were published before `@superspec-dev/render` exists on the
+registry, anyone running `npm install @superspec-dev/core` in that window would get a
+dependency resolution failure (npm can't find `@superspec-dev/render@^0.1.0` anywhere).
 Publishing render first eliminates that window entirely.
 
 ```bash
@@ -80,15 +80,15 @@ cd packages/render
 npm publish --access public
 ```
 
-`--access public` is required (or redundant-but-harmless) because `@superspec/*` is
+`--access public` is required (or redundant-but-harmless) because `@superspec-dev/*` is
 a scoped package name and scoped packages default to private on npm; the
 `publishConfig.access: "public"` already set in `package.json` should also cover
 this, but pass the flag explicitly to be safe.
 
-## 4. Publish `@superspec/core`
+## 4. Publish `@superspec-dev/core`
 
-Only after step 3 has succeeded and you can see `@superspec/render` on the
-registry (`npm view @superspec/render` should now return real data):
+Only after step 3 has succeeded and you can see `@superspec-dev/render` on the
+registry (`npm view @superspec-dev/render` should now return real data):
 
 ```bash
 cd packages/core
@@ -98,8 +98,8 @@ npm publish --access public
 ## 5. Standalone smoke test (do not skip)
 
 This is the step most likely to catch a real problem, because the monorepo's own
-dev environment never exercises real npm dependency resolution — `@superspec/core`
-resolves `@superspec/render` via workspace linking (a symlink), not via what actually
+dev environment never exercises real npm dependency resolution — `@superspec-dev/core`
+resolves `@superspec-dev/render` via workspace linking (a symlink), not via what actually
 gets fetched from the registry when a stranger runs `npm install`. A package that
 "works" in this repo's own dev loop can still be broken when published (missing
 files in `dist`, an unresolvable dependency range, a bin path that's wrong, etc.).
@@ -111,17 +111,17 @@ workspace, no `node_modules` symlink safety net:
 mkdir -p /tmp/superspec-smoke-test && cd /tmp/superspec-smoke-test
 
 # 1. MCP server should start cleanly over stdio (Ctrl+C to stop; no crash/stack trace)
-npx -y @superspec/core mcp
+npx -y @superspec-dev/core mcp
 
 # 2. Exercise a real CLI subcommand against real files. The actual subcommands
 #    (verified against packages/core/src/cli.ts) are: matrix, lint, scaffold,
 #    list-personas, mcp. Example using matrix, which needs an existing spec and
 #    plan file:
-npx -y @superspec/core matrix --spec path/to/spec.md --plan path/to/plan.md
+npx -y @superspec-dev/core matrix --spec path/to/spec.md --plan path/to/plan.md
 
 # A couple of cheaper sanity checks that need no fixture files:
-npx -y @superspec/core list-personas
-npx -y @superspec/core
+npx -y @superspec-dev/core list-personas
+npx -y @superspec-dev/core
 # ^ no subcommand: should print
 #   "Unknown command: (none). Try: matrix | lint | scaffold | list-personas | mcp"
 ```

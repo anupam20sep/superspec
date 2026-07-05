@@ -7,7 +7,7 @@ This reference maps generic SuperSpec actions to GitHub Copilot's actual tools a
 | Action | Copilot Mechanism | Configuration | Notes |
 |--------|-------------------|----------------|-------|
 | **Dispatch a subagent for an isolated task** | Agent mode (single thread, no isolation) | N/A — built-in to Copilot Chat | Copilot Chat in VS Code has Agent mode for autonomous work, but it runs in a single continuous thread with no isolated subagent-dispatch primitive. See "Fallback Pattern" below for how to simulate parallel subagent work. |
-| **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec/core) | MCP tool via configured server | `.vscode/mcp.json` in project root | Copilot can be configured to use MCP servers defined in `.vscode/mcp.json`. Tools from registered MCP servers become available in the Agent conversation. |
+| **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec-dev/core) | MCP tool via configured server | `.vscode/mcp.json` in project root | Copilot can be configured to use MCP servers defined in `.vscode/mcp.json`. Tools from registered MCP servers become available in the Agent conversation. |
 | **Invoke a skill or command** | Prompt files (reference) | `.github/prompts/*.prompt.md` | Copilot Chat supports prompt files in `.github/prompts/`. Check your version's documentation for the exact invocation syntax. No native skill dispatch equivalent to Claude Code's Skill tool — use prompt files as a workaround for reusable task templates. |
 | **Apply always-on instructions** | Copilot Instructions | `.github/copilot-instructions.md` | This file is automatically loaded by Copilot and applied to all conversations in the repository. Use it for project-wide conventions, architectural guidelines, and standing instructions (equivalent to a global `.claude/CLAUDE.md`). |
 | **Track task or todo state** | Comments in code / GitHub Issues | `.github/ISSUE_TEMPLATE/` or markdown files in repo | Copilot does not have a native todo-tracking tool. Use GitHub Issues, code comments, or markdown files in the repository for task tracking. |
@@ -47,7 +47,7 @@ Please review the implementation against these criteria:
 - Are there any bugs or edge cases?
 ```
 
-### Calling MCP tools (e.g., `forge-status` from @superspec/core)
+### Calling MCP tools (e.g., `forge-status` from @superspec-dev/core)
 If registered in `.vscode/mcp.json`, reference the tool in your Agent conversation:
 ```
 @copilot Please call the forge-status MCP tool to report current task execution...

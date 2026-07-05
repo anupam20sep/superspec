@@ -7,7 +7,7 @@ This reference maps generic SuperSpec actions to Claude Code's actual tools and 
 | Action | Claude Code Tool | Configuration | Notes |
 |--------|------------------|----------------|-------|
 | **Dispatch a subagent for an isolated task** | `Agent` tool | N/A — built-in | Spawns a fresh agent with dedicated context and full tool access. Can specify `subagent_type` to select a specialized agent — the available types are session-specific, see below. Results return as a single message when complete. Use `run_in_background` to let tasks run in parallel while continuing work. |
-| **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec/core) | MCP tool via configured server | `.mcp.json` in project root | Claude Code reads `.mcp.json` at startup; register MCP servers there and their tools become available in your context. No dynamic reload — update config and restart. |
+| **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec-dev/core) | MCP tool via configured server | `.mcp.json` in project root | Claude Code reads `.mcp.json` at startup; register MCP servers there and their tools become available in your context. No dynamic reload — update config and restart. |
 | **Invoke a skill or command** | `Skill` tool | Installed skill via `~/.claude/skills/` or project `.claude/skills/` | Loads a SKILL.md file and executes its logic. Can be invoked with `args` for parameterization. Skill content defines the behavior; Claude Code provides the dispatch mechanism. |
 | **Track task or todo state** | `TodoWrite` tool | N/A — built-in | Create, read, or update tasks in an internal todo list. Survives across conversation turns within a session. |
 | **Read a file** | `Read` tool | N/A — built-in | Read file contents from filesystem. Supports line offset/limit for large files, and can read images, PDFs (with page range), and Jupyter notebooks. |
@@ -29,7 +29,7 @@ Agent({
 ```
 The subagent runs to completion and returns results. You can dispatch multiple agents in parallel by sending all Agent tool calls in a single message.
 
-### Calling MCP tools (e.g., `forge-status` from @superspec/core)
+### Calling MCP tools (e.g., `forge-status` from @superspec-dev/core)
 Once registered in `.mcp.json`, MCP tools are available as direct tool calls. Example:
 ```
 MCP tool "forge-status" (if registered)

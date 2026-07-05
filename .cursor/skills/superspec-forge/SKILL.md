@@ -11,7 +11,7 @@ You take an execution map (from superspec-route) or a task plan (from superspec-
 
 **Why subagents:** you delegate each task to a specialized agent with isolated context. By precisely crafting its instructions, you ensure it stays focused and succeeds. It never inherits your session's context or history — you construct exactly what it needs. This also preserves your own context for coordination work across the whole loop.
 
-**Core principle:** `nextTask`, `recordResult`, and `forgeStatus` are the three operations of the `@superspec/core` library's forge-loop state machine (`packages/core/src/forge-loop.ts`): select a DAG-ready task -> route it by complexity -> dispatch a fresh implementer (red-green-refactor, zero prior context) -> dispatch a fresh reviewer (spec + quality verdicts) -> record the verdict -> repeat until status reports `complete: true`. Today, only `forge-status` is exposed as an MCP tool (and, as detailed below, only in its fresh-state form). `next-task` and `record-task-result` are not currently exposed as MCP tools or CLI subcommands. If you are working in a context that can run TypeScript/Node against `@superspec/core`, drive the loop by importing and calling `nextTask`/`recordResult` directly; otherwise, approximate the same logic yourself — scan the plan's tasks, pick the first one whose dependencies are all recorded as `done`, and track each task's pass/fail counts and the blocked threshold in your own ledger — until these are exposed as callable tools in a future iteration.
+**Core principle:** `nextTask`, `recordResult`, and `forgeStatus` are the three operations of the `@superspec-dev/core` library's forge-loop state machine (`packages/core/src/forge-loop.ts`): select a DAG-ready task -> route it by complexity -> dispatch a fresh implementer (red-green-refactor, zero prior context) -> dispatch a fresh reviewer (spec + quality verdicts) -> record the verdict -> repeat until status reports `complete: true`. Today, only `forge-status` is exposed as an MCP tool (and, as detailed below, only in its fresh-state form). `next-task` and `record-task-result` are not currently exposed as MCP tools or CLI subcommands. If you are working in a context that can run TypeScript/Node against `@superspec-dev/core`, drive the loop by importing and calling `nextTask`/`recordResult` directly; otherwise, approximate the same logic yourself — scan the plan's tasks, pick the first one whose dependencies are all recorded as `done`, and track each task's pass/fail counts and the blocked threshold in your own ledger — until these are exposed as callable tools in a future iteration.
 
 **Continuous execution:** do not pause to check in with your human partner between tasks. Execute all ready tasks without stopping. The only reasons to stop are: a task permanently `blocked` that you cannot resolve, ambiguity that genuinely prevents progress, or `forge-status` reporting `complete: true`. "Should I continue?" prompts waste your partner's time — they asked you to run the loop, so run it.
 
@@ -38,7 +38,7 @@ State is persisted to `.superspec/state.json` as you go, so a killed or restarte
 
 ## The Process
 
-The diagram below describes the loop's logic — what to select, route, implement, review, record, and repeat until complete — which holds regardless of how you invoke it. As covered above, only `forge-status` is currently a callable MCP tool; the `next-task` / `record-task-result` steps mean "call the `@superspec/core` library functions if you can, otherwise apply the same logic yourself," not "call a tool of that name."
+The diagram below describes the loop's logic — what to select, route, implement, review, record, and repeat until complete — which holds regardless of how you invoke it. As covered above, only `forge-status` is currently a callable MCP tool; the `next-task` / `record-task-result` steps mean "call the `@superspec-dev/core` library functions if you can, otherwise apply the same logic yourself," not "call a tool of that name."
 
 ```dot
 digraph process {
@@ -177,4 +177,4 @@ Conversation memory does not survive compaction. Track progress in the persisted
 
 ---
 
-<!-- Adapted from SP: skills/subagent-driven-development/SKILL.md (MIT) and skills/executing-plans/SKILL.md (MIT), fused with TDD discipline; the next-task/record-task-result/forge-status state-machine design (implemented in @superspec/core's forge-loop.ts) is new to SuperSpec. See /NOTICE. -->
+<!-- Adapted from SP: skills/subagent-driven-development/SKILL.md (MIT) and skills/executing-plans/SKILL.md (MIT), fused with TDD discipline; the next-task/record-task-result/forge-status state-machine design (implemented in @superspec-dev/core's forge-loop.ts) is new to SuperSpec. See /NOTICE. -->

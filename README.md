@@ -88,10 +88,10 @@ That installs the full lifecycle — skills, rules, hooks — from the `.cursor-
 For SuperSpec's MCP tools specifically — `build-matrix`, `lint-plan`, `route-model`, `scaffold`, `forge-status`, `list-personas` — without installing the full plugin, add this to any project's `.cursor/mcp.json`:
 
 ```json
-{ "mcpServers": { "superspec": { "command": "npx", "args": ["-y", "@superspec/core", "mcp"] } } }
+{ "mcpServers": { "superspec": { "command": "npx", "args": ["-y", "@superspec-dev/core", "mcp"] } } }
 ```
 
-`npx` resolves `@superspec/core` from the npm registry, so this works from any project regardless of whether SuperSpec is checked out there. See [docs/install.md](docs/install.md) for more detail, including the GitHub Copilot install pattern (planned, not yet built).
+`npx` resolves `@superspec-dev/core` from the npm registry, so this works from any project regardless of whether SuperSpec is checked out there. See [docs/install.md](docs/install.md) for more detail, including the GitHub Copilot install pattern (planned, not yet built).
 
 ## What's inside
 
@@ -116,7 +116,7 @@ One skill per stage, plus the entry-point bootstrap skill every session starts w
 - **`spec-reviewer`** — checks a spec for completeness and testability before design starts.
 - **`task-reviewer`** — the independent reviewer `forge` dispatches after each implementation, giving separate spec-compliance and code-quality verdicts.
 
-### The shared engine (`@superspec/core`)
+### The shared engine (`@superspec-dev/core`)
 
 The same deterministic tools, exposed identically as both an MCP server and a CLI, so every supported tool gets the same guidance and the same callable tools — not two independently-behaving copies:
 
@@ -135,9 +135,9 @@ The same deterministic tools, exposed identically as both an MCP server and a CL
 
 SuperSpec can discover specialized sub-agent personas already defined in your own project — `.claude/agents/*.md` and `.cursor/agents/*.md`, the same convention both tools already use natively — and route tasks to them by real name during `route`/`forge`. If your project has a `backend-developer` or `code-reviewer` agent already defined, SuperSpec uses it; if it doesn't, `route` falls back to a fixed generic role list (`@backend`, `@frontend`, `@qa`, `@tech-lead`, `@security`, `@performance`) with zero regression either way.
 
-### Render/sync tooling (`@superspec/render`)
+### Render/sync tooling (`@superspec-dev/render`)
 
-Skills are authored once, in `content/skills/`, in platform-neutral prose. `@superspec/render` renders that single source into each tool's own file layout (`skills/` for Claude Code, `.cursor/skills/` for Cursor) — editing one skill and re-running `node packages/render/dist/cli.js` propagates the change everywhere. [docs/acceptance/render-fidelity.md](docs/acceptance/render-fidelity.md) shows this working end to end on a real edit.
+Skills are authored once, in `content/skills/`, in platform-neutral prose. `@superspec-dev/render` renders that single source into each tool's own file layout (`skills/` for Claude Code, `.cursor/skills/` for Cursor) — editing one skill and re-running `node packages/render/dist/cli.js` propagates the change everywhere. [docs/acceptance/render-fidelity.md](docs/acceptance/render-fidelity.md) shows this working end to end on a real edit.
 
 ## Using SuperSpec on your own project
 

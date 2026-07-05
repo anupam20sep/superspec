@@ -7,7 +7,7 @@ This reference maps generic SuperSpec actions to Cursor's actual tools and mecha
 | Action | Cursor Mechanism | Configuration | Notes |
 |--------|------------------|----------------|-------|
 | **Dispatch a subagent for an isolated task** | Agent mode (single continuous thread) | N/A — built-in | Cursor's Agent mode runs autonomously in a single thread with full codebase access. Unlike Claude Code, there is no isolated subagent-dispatch primitive. All work happens in one continuous thread. See "Fallback Pattern" below. |
-| **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec/core) | MCP tool via configured server | `.cursor/mcp.json` in project root | Cursor reads `.cursor/mcp.json` at startup (parallel to Claude Code's `.mcp.json`). Register MCP servers there; tools become available within Agent mode. |
+| **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec-dev/core) | MCP tool via configured server | `.cursor/mcp.json` in project root | Cursor reads `.cursor/mcp.json` at startup (parallel to Claude Code's `.mcp.json`). Register MCP servers there; tools become available within Agent mode. |
 | **Invoke a skill or command** | SKILL.md (skill format) | `.cursor/skills/`, `.agents/skills/`, `~/.cursor/skills/`, `~/.agents/skills/` | Cursor recognizes SKILL.md files in `.cursor/skills/` (project-local), `.agents/skills/` (monorepo-aware), and global `~/.cursor/skills/` or `~/.agents/skills/` locations using the SKILL.md specification. Skill identity is determined by the folder containing SKILL.md. Cursor has converged on the SKILL.md specification for interoperability with Claude Code and other tools. |
 | **Track task or todo state** | Comments in code / inline notes | `.cursor/notes.md` (convention) | Cursor does not have a native todo tracking tool equivalent to Claude Code's TodoWrite. Use code comments, inline markdown notes, or an external task file in the project. |
 | **Read a file** | Built-in file viewing | N/A — automatic | Cursor can read any file in the project context or via explicit file references in the prompt. |
@@ -45,7 +45,7 @@ Now implement FR-002: Add password reset flow.
 ...
 ```
 
-### Calling MCP tools (e.g., `forge-status` from @superspec/core)
+### Calling MCP tools (e.g., `forge-status` from @superspec-dev/core)
 Register the MCP server in `.cursor/mcp.json`, then reference it in Agent mode or SKILL.md:
 ```
 Agent: "Call the forge-status MCP tool to report on current task execution..."

@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { readSkill, frontmatterField } from "@superspec/render";
+import { readSkill, frontmatterField } from "@superspec-dev/render";
 
 export interface Persona {
   name: string;

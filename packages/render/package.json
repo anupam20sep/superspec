@@ -1,6 +1,6 @@
 {
-  "name": "@superspec/render",
-  "version": "0.1.0",
+  "name": "@superspec-dev/render",
+  "version": "0.1.1",
   "description": "Renders SuperSpec's shared skill content into per-tool file layouts for Claude Code and Cursor.",
   "type": "module",
   "license": "MIT",

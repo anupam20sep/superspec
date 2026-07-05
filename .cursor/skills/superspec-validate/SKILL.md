@@ -35,7 +35,7 @@ BEFORE claiming feature completion or expressing satisfaction:
    - execution-map: Per-window verification gates are met
 
 2. RUN: Execute the FULL command (fresh, complete, parse real output)
-   - Use @superspec/core's MCP tools: build-matrix, lint-plan
+   - Use @superspec-dev/core's MCP tools: build-matrix, lint-plan
    - Read spec.md + plan.md (real files, not assumptions)
    - Cross-check execution-map.md for gate structure
 

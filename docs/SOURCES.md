@@ -114,7 +114,7 @@ Plan #6b shipped a *local/internal* marketplace; Plan #8 adds the public-distrib
 Plan #1 is the **code half**: it builds only what the lean-audit says *must* be code. There is
 little to copy here — that is expected and correct.
 
-| `@superspec/core` module | Source | Strategy | Why code, not a prompt |
+| `@superspec-dev/core` module | Source | Strategy | Why code, not a prompt |
 |---|---|---|---|
 | `spec-parser.ts`, `plan-parser.ts` | neither (SK parses in Python) | NEW (minimal regex glue) | Deterministic, repeatable inputs to the matrix; ~30 lines each |
 | `matrix.ts` (FR↔Task↔Test↔Gate) | **neither project has it** | NEW | The "missing link" that makes SDD+TDD *verifiable*; a model eyeballing coverage is exactly the unreliable thing we remove |
@@ -124,7 +124,7 @@ little to copy here — that is expected and correct.
 | `scaffold.ts` | `SK` renders templates in code | REIMPLEMENT (trivial) | Deterministic file generation |
 | `mcp-server.ts` | `@modelcontextprotocol/sdk` v1.x — `registerTool` API confirmed via Context7 (`/modelcontextprotocol/typescript-sdk` v1.x) | COPY SDK usage | Thin transport adapter, no business logic |
 | `cli.ts` | Node `node:util` `parseArgs`; error-handling pattern COPY from `SK: src/specify_cli/commands/init.py` (wrap risky operation in try/except, report failure through the same success-path channel, continue — never let the CLI crash on bad input) | NEW (thin) + COPY (error pattern) | Thin transport adapter, no business logic; advise-only constraint requires every path to degrade gracefully, which is exactly Spec Kit's established CLI convention |
-| `persona-discovery.ts` (Plan #7a) | discovery convention REUSE (Claude Code's/Cursor's own native `name`/`description` agent-frontmatter convention, being read not invented); frontmatter parsing REUSE `@superspec/render`'s `skill-reader.ts` (`readSkill`/`frontmatterField`) via a new `@superspec/render` workspace dependency | NEW (discovery/dedup logic) + REUSE (parser, convention) | Deterministic, testable discovery of user-defined personas in a target project — no code existed for this in either upstream |
+| `persona-discovery.ts` (Plan #7a) | discovery convention REUSE (Claude Code's/Cursor's own native `name`/`description` agent-frontmatter convention, being read not invented); frontmatter parsing REUSE `@superspec-dev/render`'s `skill-reader.ts` (`readSkill`/`frontmatterField`) via a new `@superspec-dev/render` workspace dependency | NEW (discovery/dedup logic) + REUSE (parser, convention) | Deterministic, testable discovery of user-defined personas in a target project — no code existed for this in either upstream |
 
 **Lean-audit verdict for Plan #1:** nothing to cut — every module is the irreducible deterministic
 spine. The copy-heavy work lives in Plans #2 (content) and #6 (render); this plan deliberately
