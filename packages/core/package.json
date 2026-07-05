@@ -1,9 +1,19 @@
 {
   "name": "@superspec/core",
   "version": "0.1.0",
+  "description": "Shared engine behind SuperSpec's spec-driven + TDD-driven lifecycle tools — exposes an MCP server and CLI for matrix, lint, scaffold, and persona discovery.",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "TBD - set after creating the public GitHub repo"
+  },
   "main": "./dist/index.js",
   "bin": { "superspec": "./dist/cli.js" },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "start:mcp": "node dist/mcp-server.js"

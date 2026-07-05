@@ -1,11 +1,21 @@
 {
   "name": "@superspec/render",
   "version": "0.1.0",
+  "description": "Renders SuperSpec's shared skill content into per-tool file layouts for Claude Code and Cursor.",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "TBD - set after creating the public GitHub repo"
+  },
   "main": "./dist/skill-reader.js",
   "exports": {
     ".": "./dist/skill-reader.js"
   },
   "bin": { "superspec-render": "./dist/cli.js" },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": { "build": "tsc -b" }
 }
