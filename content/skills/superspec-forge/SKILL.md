@@ -88,6 +88,15 @@ digraph process {
 }
 ```
 
+## Dispatching With a Discovered Persona
+
+The "Dispatch implementer subagent" step above is a single node in the diagram, but what identity you construct for that dispatch depends on how the task's persona was assigned. superspec-route's persona-assignment step attaches each execution-map window a persona in one of two forms: the real `name` of a persona that `list-personas` discovered in the target project (e.g. `"backend-developer"`), or, when discovery found nothing suitable, one of the fixed generic `@`-prefixed fallback roles (e.g. `@backend`). Before dispatching the implementer for a task, check which form its assigned persona is in:
+
+- **Assigned persona matches a name `list-personas` actually discovered:** in addition to the task's own zero-prior-context brief, layer that persona's declared identity on top of it. Read the persona's description from its own file (the `path` field `list-personas` returned for it), and fold that description into the framing you give the implementer so it carries that persona's declared expertise and responsibilities, not just the task instructions. If your current environment's own subagent-dispatch mechanism supports invoking a specifically named custom agent (many agent-capable tools do, but this is a capability of the environment, not something this skill can assume exists everywhere), use that mechanism to dispatch the implementer as that named agent. If it does not — or you're not sure — the fallback always works: read the persona's file yourself and paste its description into the task brief as ordinary prompt context, exactly as you would fold in any other piece of context. The zero-prior-context discipline still applies to everything else — the persona's description is the one piece of standing context this dispatch is allowed to carry in.
+- **Assigned persona is a generic `@`-prefixed fallback role, or no persona was assigned:** dispatch a generic implementer exactly as described elsewhere in this skill — no identity layering, no change to today's behavior.
+
+Do not assume a specific mechanism for "invoke a named custom agent" exists — describe what you need (an implementer with this persona's identity, working this task, with zero other prior context) and use whichever native construct your environment offers, or the manual fold-in-the-description fallback when it offers none.
+
 ## Red-Green-Refactor Per Task
 
 Every implementer dispatch follows test-driven development inline — this is not a separate skill to invoke, it's the discipline embedded in every task the loop dispatches:
