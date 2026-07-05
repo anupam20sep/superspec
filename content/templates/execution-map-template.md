@@ -70,6 +70,9 @@ Each task or window is owned by a persona responsible for execution, code review
 | W4: Testing & Integration | @qa; @backend; @frontend | @tech-lead | Test coverage, edge cases, cross-team integration. |
 | W5: Quality Gates | @tech-lead | @security; @performance | Lint, types, coverage, security scan, load-test results. |
 
+> **Note on Persona Sourcing:**
+> Personas in a filled-in execution-map.md come from one of two sources: (1) custom agent definitions discovered from the target project via a discovery tool, using each agent's real name, or (2) the fixed fallback roles listed below when no custom agents are discovered. A completed execution-map.md should document which sourcing method was used for its persona assignments.
+
 **Persona Definitions:**
 - `@backend`: Owns database, migrations, service layer, API contract.
 - `@frontend`: Owns client UI, state, build pipeline.
