@@ -97,6 +97,18 @@ Authored in Plan #2 (shared content layer). **This is where the bulk of the valu
 
 ---
 
+## Public npm distribution (Plan #8) — reverses the internal-only decision
+
+Plan #6b shipped a *local/internal* marketplace; Plan #8 adds the public-distribution path the project owner decided to pursue after finding a real gap in it (Cursor has no cross-project install mechanism, and both marketplaces copy plugin files into a managed cache that a self-referencing repo path can't reliably reach).
+
+| SuperSpec artifact | Upstream source | Strategy |
+|---|---|---|
+| `packages/core/src/cli.ts`'s `mcp` subcommand | ADAPT of the existing `runCli`/`runCliInner` dispatcher already in this file (Plan #1) | ADAPT |
+| `npx <published-package> mcp`-style invocation pattern | REUSE — observed directly in a real, working Cursor Marketplace plugin (`shadcn`, inspected via `~/.cursor/plugins/cache/`), which invokes its bundled MCP server as `{"command": "npx", "args": ["shadcn@latest", "mcp"]}` rather than a self-referencing install path; not invented | REUSE (pattern) |
+| `docs/PUBLISHING.md` (maintainer runbook for npm publish + marketplace submission) | none | NEW |
+
+---
+
 ## Core engine (Plan #1) — mostly NEW (the deterministic verification spine)
 
 Plan #1 is the **code half**: it builds only what the lean-audit says *must* be code. There is
