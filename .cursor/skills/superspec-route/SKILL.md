@@ -79,7 +79,11 @@ Assign model routing to each task individually, then summarize by window (all ta
 
 ### 4. Assign Personas
 
-Assign ownership per task or window:
+Before assigning any persona to a window, call the `list-personas` discovery tool. It scans the project's specialized agent definitions — any custom agent files defined for the project — and returns each one's name and description.
+
+**If discovery returns one or more personas:** match each window's dominant task type against the discovered personas' descriptions, and assign the closest fit as that window's primary persona, using the persona's real name exactly as discovered (not an invented `@`-prefixed label). This matching is a judgment call, not a deterministic algorithm — there's no formula for it, so weigh what each window's tasks actually require against what each discovered persona's description says it owns or reviews. Secondary (reviewer) personas can be assigned the same way, from the remaining discovered personas. If no discovered persona is a good fit for a particular window, it's fine to say so and fall back to the generic list below for just that window — fallback can be applied per-window, not only all-or-nothing across the whole plan.
+
+**If discovery returns an empty list,** fall back to this fixed set of generic roles:
 - `@backend`: Owns database, migrations, service layer, API contract
 - `@frontend`: Owns client UI, state, build pipeline
 - `@qa`: Owns test strategy, coverage targets, integration scenarios
@@ -87,7 +91,7 @@ Assign ownership per task or window:
 - `@security`: Reviews auth, encryption, input validation, RBAC
 - `@performance`: Reviews query plans, caching, asset optimization
 
-Each window has a primary persona (executor) and optional secondary personas (reviewers).
+Each window has a primary persona (executor) and optional secondary personas (reviewers), whether personas come from discovery or from the generic fallback list.
 
 ### 5. Define Verification Gates
 
