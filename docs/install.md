@@ -26,6 +26,22 @@ claude plugin install superspec@superspec-dev
 
 Both commands are safe to re-run. If the marketplace or plugin is already registered/installed, they will update it in place or report that no further action is needed.
 
+### Note on the plugin's own `.mcp.json` vs. using SuperSpec's tools in another project
+
+The `.mcp.json` committed at the root of this repository (used by the SuperSpec plugin's own skills/MCP wiring) references `${CLAUDE_PLUGIN_ROOT}`, a variable Claude Code resolves automatically once the plugin is installed. That file is correct as-is and does not need to change.
+
+`${CLAUDE_PLUGIN_ROOT}` only has meaning inside an actual installed plugin's own manifest, though — it can't be used to reach SuperSpec's MCP tools from some other, unrelated project's own `.mcp.json`. For that different scenario — wanting SuperSpec's tools available in a project that isn't the SuperSpec plugin itself — the mechanism is the same npx-based one described under [Cursor](#using-superspecs-mcp-tools-in-a-different-project) below: once `@superspec/core` is published to npm (not yet), that other project's own `.mcp.json` can add
+
+```json
+{
+  "mcpServers": {
+    "superspec": { "command": "npx", "args": ["-y", "@superspec/core", "mcp"] }
+  }
+}
+```
+
+which resolves via the npm registry rather than any path into this repository or a plugin cache.
+
 ## Cursor
 
 No install steps are required. Cursor automatically discovers and loads SuperSpec when you open this repository as a workspace folder:
@@ -37,6 +53,24 @@ No install steps are required. Cursor automatically discovers and loads SuperSpe
 Simply open the SuperSpec repository folder in Cursor and the plugin will be ready to use.
 
 A `.cursor-plugin/plugin.json` manifest is also present in the repository for Cursor's optional plugin packaging mechanism, available for use in future scenarios.
+
+### Using SuperSpec's MCP tools in a different project
+
+The instructions above are for developing SuperSpec itself, or using it directly from a checkout of this repository — they remain the correct way to do that and are not changing.
+
+**Not yet available:** `@superspec/core` has not been published to npm yet. The following describes what will work once it is published; it does not work today.
+
+Once `@superspec/core` is published to npm, any *other* project — one that has nothing to do with this repository and doesn't have it checked out — can get SuperSpec's MCP tools (`build-matrix`, `lint-plan`, `route-model`, `scaffold`, `forge-status`, `list-personas`) by adding an entry to that project's own `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "superspec": { "command": "npx", "args": ["-y", "@superspec/core", "mcp"] }
+  }
+}
+```
+
+This works regardless of where that other project lives on disk, because `npx` resolves `@superspec/core` from the npm registry (or a local npm cache) rather than requiring a filesystem path into wherever this SuperSpec repository happens to be checked out. That's the key difference from the `.cursor/mcp.json` in *this* repository (shown above), which uses `${workspaceFolder}` and therefore only makes sense when the workspace folder is this repository itself.
 
 ## Adding GitHub Copilot (future)
 

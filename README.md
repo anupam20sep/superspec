@@ -45,6 +45,8 @@ One shared source (`content/`) is rendered into each tool's own file layout by `
 
 Enforcement is advise-only throughout: SuperSpec generates, validates, and reports — it never hard-blocks a commit or CI run.
 
+Once `@superspec/core` is published to npm (not yet — see [docs/install.md](docs/install.md#using-superspecs-mcp-tools-in-a-different-project)), its MCP tools will also be reachable from any other project via `npx -y @superspec/core mcp`, without needing a checkout of this repository.
+
 ## Build
 
 ```bash
