@@ -4,9 +4,19 @@ import { parseSpec } from "./spec-parser.js";
 import { parsePlan } from "./plan-parser.js";
 import { buildMatrix, matrixGaps } from "./matrix.js";
 import { lintPlan } from "./plan-lint.js";
+import { lintDesign } from "./design-lint.js";
+import { lintSpec } from "./spec-lint.js";
 import { scaffold } from "./scaffold.js";
 import { discoverPersonas } from "./persona-discovery.js";
 import { runMcpServer } from "./mcp-server.js";
+import {
+  initState,
+  nextTask,
+  recordResult,
+  forgeStatus,
+  loadState,
+  saveState,
+} from "./forge-loop.js";
 
 export interface CliResult {
   code: number;
@@ -57,9 +67,35 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
   }
 
   if (command === "lint") {
-    const { values } = parseArgs({ args: rest, options: { plan: { type: "string" } } });
+    const { values } = parseArgs({
+      args: rest,
+      options: {
+        plan: { type: "string" },
+        design: { type: "string" },
+        spec: { type: "string" },
+        "specs-root": { type: "string" },
+      },
+    });
+    if (values.spec !== undefined) {
+      try {
+        const findings = lintSpec(await readFile(values.spec as string, "utf8"));
+        return { code: 0, stdout: JSON.stringify(findings, null, 2) };
+      } catch (err) {
+        return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      }
+    }
+    if (values.design !== undefined) {
+      try {
+        const findings = await lintDesign(await readFile(values.design as string, "utf8"), {
+          specsRoot: values["specs-root"] as string | undefined,
+        });
+        return { code: 0, stdout: JSON.stringify(findings, null, 2) };
+      } catch (err) {
+        return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      }
+    }
     if (values.plan === undefined) {
-      return { code: 0, stdout: "Error: missing required argument --plan" };
+      return { code: 0, stdout: "Error: missing required argument --plan, --design, or --spec" };
     }
     try {
       const findings = lintPlan(await readFile(values.plan as string, "utf8"));
@@ -89,6 +125,84 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
     }
   }
 
+  if (command === "next-task") {
+    const { values } = parseArgs({
+      args: rest,
+      options: { plan: { type: "string" }, dir: { type: "string" } },
+    });
+    const missing = [
+      values.plan === undefined ? "--plan" : null,
+      values.dir === undefined ? "--dir" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    try {
+      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const state = (await loadState(values.dir as string)) ?? initState(tasks);
+      const task = nextTask(tasks, state);
+      return { code: 0, stdout: JSON.stringify({ task }, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
+  if (command === "record-result") {
+    const { values } = parseArgs({
+      args: rest,
+      options: {
+        plan: { type: "string" },
+        dir: { type: "string" },
+        task: { type: "string" },
+        passed: { type: "string" },
+      },
+    });
+    const missing = [
+      values.plan === undefined ? "--plan" : null,
+      values.dir === undefined ? "--dir" : null,
+      values.task === undefined ? "--task" : null,
+      values.passed === undefined ? "--passed" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    if (values.passed !== "true" && values.passed !== "false") {
+      return { code: 0, stdout: "Error: --passed must be true or false" };
+    }
+    try {
+      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const state = (await loadState(values.dir as string)) ?? initState(tasks);
+      recordResult(state, values.task as string, values.passed === "true", {
+        maxReviewFailures: 3,
+      });
+      await saveState(values.dir as string, state);
+      return { code: 0, stdout: JSON.stringify({ ok: true }, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
+  if (command === "forge-status") {
+    const { values } = parseArgs({
+      args: rest,
+      options: { plan: { type: "string" }, dir: { type: "string" } },
+    });
+    const missing = [
+      values.plan === undefined ? "--plan" : null,
+      values.dir === undefined ? "--dir" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    try {
+      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const state = (await loadState(values.dir as string)) ?? initState(tasks);
+      return { code: 0, stdout: JSON.stringify(forgeStatus(state), null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
   if (command === "list-personas") {
     const { values } = parseArgs({
       args: rest,
@@ -107,7 +221,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
 
   return {
     code: 0,
-    stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold | list-personas | mcp`,
+    stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold | list-personas | next-task | record-result | forge-status | mcp`,
   };
 }
 

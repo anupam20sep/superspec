@@ -6,8 +6,10 @@
   "engines": { "node": ">=20" },
   "workspaces": ["packages/*"],
   "scripts": {
+    "build": "tsc -b",
+    "render": "node packages/render/dist/cli.js",
     "test": "vitest run",
-    "build": "tsc -b"
+    "dogfood:url-shortener": "node packages/core/dist/cli.js lint --spec examples/url-shortener/spec.md && node packages/core/dist/cli.js lint --design examples/url-shortener/design.md --specs-root . && node packages/core/dist/cli.js lint --plan examples/url-shortener/plan.md && node packages/core/dist/cli.js matrix --spec examples/url-shortener/spec.md --plan examples/url-shortener/plan.md && npx vitest run examples/url-shortener"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

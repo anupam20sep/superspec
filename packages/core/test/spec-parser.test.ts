@@ -13,6 +13,7 @@ describe("parseSpec", () => {
 
     const spec = parseSpec(md);
 
+    expect(spec.type).toBe("product");
     expect(spec.requirements).toEqual([
       { id: "FR-001", text: "The system MUST accept a URL." },
       { id: "FR-002", text: "The system MUST return a short code." },
@@ -24,8 +25,14 @@ describe("parseSpec", () => {
 
   it("returns empty arrays when nothing matches", () => {
     expect(parseSpec("# Title\n\nno ids here")).toEqual({
+      type: "product",
       requirements: [],
       criteria: [],
     });
+  });
+
+  it("parses spec type from header", () => {
+    const md = ["**Type**: migration", "- **FR-001**: Move data safely."].join("\n");
+    expect(parseSpec(md).type).toBe("migration");
   });
 });

@@ -16,8 +16,22 @@ describe("parsePlan", () => {
     ].join("\n");
 
     expect(parsePlan(md)).toEqual([
-      { id: "T001", title: "Create URL model", frRefs: ["FR-001", "FR-002"], dependsOn: [], complexity: "mechanical" },
-      { id: "T002", title: "Add redirect handler", frRefs: ["FR-003"], dependsOn: ["T001"], complexity: "complex" },
+      {
+        id: "T001",
+        title: "Create URL model",
+        frRefs: ["FR-001", "FR-002"],
+        dependsOn: [],
+        complexity: "mechanical",
+        kind: "code",
+      },
+      {
+        id: "T002",
+        title: "Add redirect handler",
+        frRefs: ["FR-003"],
+        dependsOn: ["T001"],
+        complexity: "complex",
+        kind: "code",
+      },
     ]);
   });
 
@@ -30,13 +44,27 @@ describe("parsePlan", () => {
     ].join("\n");
 
     expect(parsePlan(md)).toEqual([
-      { id: "T003", title: "Refactor config loader", frRefs: ["FR-004"], dependsOn: [], complexity: "moderate" },
+      {
+        id: "T003",
+        title: "Refactor config loader",
+        frRefs: ["FR-004"],
+        dependsOn: [],
+        complexity: "moderate",
+        kind: "code",
+      },
     ]);
   });
 
   it("defaults complexity to mechanical and refs/deps to empty when absent", () => {
     expect(parsePlan("### Task T009: Bare task")).toEqual([
-      { id: "T009", title: "Bare task", frRefs: [], dependsOn: [], complexity: "mechanical" },
+      {
+        id: "T009",
+        title: "Bare task",
+        frRefs: [],
+        dependsOn: [],
+        complexity: "mechanical",
+        kind: "code",
+      },
     ]);
   });
 
@@ -54,8 +82,34 @@ describe("parsePlan", () => {
     ].join("\n");
 
     expect(parsePlan(md)).toEqual([
-      { id: "0.1", title: "Design database schema", frRefs: ["FR-010"], dependsOn: [], complexity: "complex" },
-      { id: "0.2", title: "Implement persistence layer", frRefs: ["FR-011", "FR-012"], dependsOn: ["T001"], complexity: "mechanical" },
+      {
+        id: "0.1",
+        title: "Design database schema",
+        frRefs: ["FR-010"],
+        dependsOn: [],
+        complexity: "complex",
+        kind: "code",
+      },
+      {
+        id: "0.2",
+        title: "Implement persistence layer",
+        frRefs: ["FR-011", "FR-012"],
+        dependsOn: ["T001"],
+        complexity: "mechanical",
+        kind: "code",
+      },
     ]);
+  });
+
+  it("parses task kind", () => {
+    const md = [
+      "### Task T010: Run smoke check",
+      "**Implements:** FR-020",
+      "**Depends on:** none",
+      "**Complexity:** mechanical",
+      "**Kind:** verify",
+    ].join("\n");
+
+    expect(parsePlan(md)[0].kind).toBe("verify");
   });
 });

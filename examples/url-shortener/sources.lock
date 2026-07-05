@@ -1,0 +1,13 @@
+# sources.lock — locked at ingest time; do not edit without re-ingest
+feature: url-shortener
+ingested_at: 2026-07-05T00:00:00Z
+mode: code-first
+discovery_tier: grep-fallback
+sources:
+  - path: examples/url-shortener/src/shortener.ts
+    role: primary
+    note: core shorten/resolve behavior
+  - path: examples/url-shortener/test/shortener.test.ts
+    role: supplementary
+    note: observed acceptance behavior
+conflicts: []

@@ -6,7 +6,16 @@
 
 **Status**: Draft
 
+**Type**: product
+
 **Input**: User description: "Let's build a URL shortener"
+
+## Required Reading
+
+| Path | Reason |
+|------|--------|
+| `content/templates/constitution.md` | Governance — Test-First and traceability rules for plan tasks |
+| `examples/url-shortener/design.md` | Architecture decisions already approved for this worked example |
 
 ## User Scenarios & Testing *(mandatory)*
 

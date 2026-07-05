@@ -52,4 +52,28 @@ describe("lintPlan TDD cycle detection", () => {
     expect(tddFinding).toBeDefined();
     expect(tddFinding?.message).toContain("Task 0.1");
   });
+
+  it("does not require TDD cycle for verify-kind tasks", () => {
+    const md = [
+      "### Task T010: Smoke check",
+      "**Kind:** verify",
+      "- [ ] Step 1: Run staging smoke",
+      "Run: `npm run smoke`",
+      "Expected: all checks pass",
+    ].join("\n");
+
+    const findings = lintPlan(md);
+    expect(findings.some((f) => f.rule === "no-tdd-cycle")).toBe(false);
+  });
+
+  it("flags verify-kind tasks missing command proof", () => {
+    const md = [
+      "### Task T011: Bad verify",
+      "**Kind:** verify",
+      "- [ ] Step 1: Check it works",
+    ].join("\n");
+
+    const findings = lintPlan(md);
+    expect(findings.some((f) => f.rule === "no-verify-proof")).toBe(true);
+  });
 });

@@ -13,8 +13,8 @@ import {
 import type { Task } from "../src/types.js";
 
 const tasks: Task[] = [
-  { id: "T001", title: "a", frRefs: ["FR-001"], dependsOn: [], complexity: "mechanical" },
-  { id: "T002", title: "b", frRefs: ["FR-002"], dependsOn: ["T001"], complexity: "complex" },
+  { id: "T001", title: "a", frRefs: ["FR-001"], dependsOn: [], complexity: "mechanical", kind: "code" },
+  { id: "T002", title: "b", frRefs: ["FR-002"], dependsOn: ["T001"], complexity: "complex", kind: "code" },
 ];
 
 describe("forge loop task selection", () => {

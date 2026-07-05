@@ -8,7 +8,7 @@ const reqs: Requirement[] = [
 ];
 
 const tasks: Task[] = [
-  { id: "T001", title: "x", frRefs: ["FR-001"], dependsOn: [], complexity: "mechanical" },
+  { id: "T001", title: "x", frRefs: ["FR-001"], dependsOn: [], complexity: "mechanical", kind: "code" },
 ];
 
 describe("buildMatrix", () => {

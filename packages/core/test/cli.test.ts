@@ -78,11 +78,59 @@ describe("runCli lint", () => {
   });
 });
 
+describe("runCli forge loop persisted round-trip", () => {
+  let planPath: string;
+  let stateDir: string;
+
+  const FORGE_PLAN =
+    "### Task T001: First\n**Implements:** FR-001\n\n### Task T002: Second\n**Implements:** FR-002\n**Depends on:** T001\n";
+
+  beforeEach(async () => {
+    stateDir = join(root, "project");
+    planPath = join(stateDir, "plan.md");
+    await mkdir(stateDir, { recursive: true });
+    await writeFile(planPath, FORGE_PLAN, "utf8");
+  });
+
+  it("next-task, record-result, and forge-status persist state across calls", async () => {
+    const first = await runCli(["next-task", "--plan", planPath, "--dir", stateDir]);
+    expect(first.code).toBe(0);
+    expect(JSON.parse(first.stdout).task.id).toBe("T001");
+
+    const record = await runCli([
+      "record-result",
+      "--plan",
+      planPath,
+      "--dir",
+      stateDir,
+      "--task",
+      "T001",
+      "--passed",
+      "true",
+    ]);
+    expect(record.code).toBe(0);
+    expect(JSON.parse(record.stdout)).toEqual({ ok: true });
+
+    const second = await runCli(["next-task", "--plan", planPath, "--dir", stateDir]);
+    expect(JSON.parse(second.stdout).task.id).toBe("T002");
+
+    const status = await runCli(["forge-status", "--plan", planPath, "--dir", stateDir]);
+    expect(JSON.parse(status.stdout)).toEqual({
+      total: 2,
+      done: 1,
+      blocked: 0,
+      pending: 1,
+      complete: false,
+    });
+  });
+});
+
 describe("runCli unknown command", () => {
   it("reports an error but still exits 0 (advise-only)", async () => {
     const { code, stdout } = await runCli(["frobnicate"]);
     expect(code).toBe(0);
     expect(stdout).toMatch(/unknown command/i);
+    expect(stdout).toMatch(/next-task/);
   });
 });
 

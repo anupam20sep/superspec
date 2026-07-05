@@ -104,20 +104,22 @@ Each window has a rollback plan:
 
 Before a window is considered "done," the following checks must pass:
 
-| Gate | Applies To | Criteria | Owner |
-|------|------------|----------|-------|
-| **Schema Validation** | W1 | Schema change passes `npm run db:validate`. No breaking changes to existing API contracts. Tested on backup data. | @backend |
-| **Unit Test Coverage** | W2, W3, W4 | All new code has ≥80% line coverage (≥90% for critical paths like auth, payments). Coverage diffs tracked in CI. | @qa, @backend |
-| **Type Safety** | W3, W5 | `npm run typecheck` passes. No `any` types except in explicitly-allowed legacy modules. | @tech-lead |
-| **Linting** | W5 | `npm run lint -- --fix` applies no changes. ESLint and Prettier agree. | @tech-lead |
-| **Contract Tests** | W3 (API), W4 | API schema validated against OpenAPI spec. Frontend mock server matches live API. Cross-team contract signed off. | @backend, @frontend |
-| **Integration Tests** | W4 | All integration tests pass on the staging environment. No flaky tests; 3 consecutive green runs required. | @qa |
-| **Security Scan** | W5 | SAST scan (e.g., `npm audit`, Snyk) returns 0 high/critical vulns. Secrets not committed (pre-commit hook enforces). | @security |
-| **Performance Baseline** | W5 | For W3 (API): new endpoints have ≤200ms p99 latency under load test (100 req/s). For W3 (frontend): Lighthouse score ≥90. | @performance |
-| **Rollback Rehearsal** | W5 | Rollback procedure tested in staging. Revert commits cleanly; no orphaned references or state. | @tech-lead |
+| Gate | Applies To | Criteria | Type | Blocks | Owner |
+|------|------------|----------|------|--------|-------|
+| **Schema Validation** | W1 | Schema change passes `npm run db:validate`. No breaking changes to existing API contracts. Tested on backup data. | automated | plan, forge | @backend |
+| **Unit Test Coverage** | W2, W3, W4 | All new code has ≥80% line coverage (≥90% for critical paths like auth, payments). Coverage diffs tracked in CI. | automated | forge | @qa, @backend |
+| **Type Safety** | W3, W5 | `npm run typecheck` passes. No `any` types except in explicitly-allowed legacy modules. | automated | forge, ship | @tech-lead |
+| **Linting** | W5 | `npm run lint -- --fix` applies no changes. ESLint and Prettier agree. | automated | ship | @tech-lead |
+| **Contract Tests** | W3 (API), W4 | API schema validated against OpenAPI spec. Frontend mock server matches live API. Cross-team contract signed off. | human | forge, ship | @backend, @frontend |
+| **Integration Tests** | W4 | All integration tests pass on the staging environment. No flaky tests; 3 consecutive green runs required. | automated | forge | @qa |
+| **Security Scan** | W5 | SAST scan (e.g., `npm audit`, Snyk) returns 0 high/critical vulns. Secrets not committed (pre-commit hook enforces). | automated | ship | @security |
+| **Performance Baseline** | W5 | For W3 (API): new endpoints have ≤200ms p99 latency under load test (100 req/s). For W3 (frontend): Lighthouse score ≥90. | human | ship | @performance |
+| **Rollback Rehearsal** | W5 | Rollback procedure tested in staging. Revert commits cleanly; no orphaned references or state. | human | ship | @tech-lead |
 
 **Gate Policy:**
 - Gates are checked per window; a gate failure blocks that window's merge.
+- **Type** `automated` gates must pass via CI/tool output; **Type** `human` gates require explicit owner signoff (recorded in `audit.log` during validate/ship).
+- **Blocks** indicates which lifecycle stages the gate applies to: `plan` (blocks plan approval), `forge` (blocks task completion), `ship` (blocks release).
 - If a gate fails, the owning persona files a bug or adds a task to resolve it before re-review.
 - Code review approval by the primary persona is required before a window is merged.
 

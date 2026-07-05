@@ -228,6 +228,22 @@ def create_{{feature}}(
 - **[Service Name]**: [Protocol, e.g., REST/gRPC], [Auth, e.g., OAuth2], [Rate limit], [SLA]
 - [Add more as needed]
 
+### Consumed From Other Specs
+
+[Contracts, events, or data shapes this feature depends on from sibling or upstream specs. Resolve ambiguities before handoff to plan.]
+
+| Source spec | Contract | Version / stability | Notes |
+|-------------|----------|---------------------|-------|
+| [e.g., `specs/001-auth`] | [e.g., `POST /oauth/token` response schema] | [e.g., v1, stable] | [e.g., required for session bootstrap] |
+
+### Produced For Other Specs
+
+[Contracts, events, or data shapes downstream specs will consume from this feature.]
+
+| Target spec / consumer | Contract | Version / stability | Notes |
+|------------------------|----------|---------------------|-------|
+| [e.g., `specs/004-billing`] | [e.g., `user.created` event payload] | [e.g., v1, additive-only] | [e.g., billing listens on signup] |
+
 ### Event Schema (if applicable)
 
 [If this feature publishes or consumes events, define the schema: topic/channel, payload structure, retention, ordering guarantees.]

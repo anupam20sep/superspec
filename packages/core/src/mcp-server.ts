@@ -5,9 +5,11 @@ import { parseSpec } from "./spec-parser.js";
 import { parsePlan } from "./plan-parser.js";
 import { buildMatrix, matrixGaps } from "./matrix.js";
 import { lintPlan } from "./plan-lint.js";
+import { lintDesign, lintDesignText } from "./design-lint.js";
+import { lintSpec } from "./spec-lint.js";
 import { routeModel } from "./model-router.js";
 import { scaffold } from "./scaffold.js";
-import { initState, forgeStatus } from "./forge-loop.js";
+import { initState, forgeStatus, nextTask, recordResult, loadState, saveState } from "./forge-loop.js";
 import { discoverPersonas } from "./persona-discovery.js";
 
 interface ToolContent {
@@ -45,6 +47,18 @@ export function buildToolDefinitions(): ToolDef[] {
       handler: async (args) => json(lintPlan(args.planText as string)),
     },
     {
+      name: "lint-spec",
+      description: "Lint spec.md for type, FR/SC completeness, placeholders, and clarification count.",
+      schema: { specText: z.string() },
+      handler: async (args) => json(lintSpec(args.specText as string)),
+    },
+    {
+      name: "lint-design",
+      description: "Lint design.md for incomplete decisions, NEEDS CLARIFICATION, and contract table shape.",
+      schema: { designText: z.string() },
+      handler: async (args) => json(lintDesignText(args.designText as string)),
+    },
+    {
       name: "route-model",
       description: "Recommend strong or fast model for a task complexity.",
       schema: { complexity: z.enum(["mechanical", "moderate", "complex"]) },
@@ -57,10 +71,48 @@ export function buildToolDefinitions(): ToolDef[] {
       handler: async (args) => json({ written: await scaffold(args.templatesDir as string, args.targetDir as string, {}) }),
     },
     {
+      name: "next-task",
+      description: "Return the next DAG-ready pending task from persisted forge state.",
+      schema: { planText: z.string(), stateDir: z.string() },
+      handler: async (args) => {
+        const tasks = parsePlan(args.planText as string);
+        const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
+        return json({ task: nextTask(tasks, state) });
+      },
+    },
+    {
+      name: "record-result",
+      description: "Record a pass/fail review verdict for a task and persist forge state.",
+      schema: {
+        planText: z.string(),
+        stateDir: z.string(),
+        taskId: z.string(),
+        passed: z.boolean(),
+      },
+      handler: async (args) => {
+        const tasks = parsePlan(args.planText as string);
+        const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
+        recordResult(state, args.taskId as string, args.passed as boolean, {
+          maxReviewFailures: 3,
+        });
+        await saveState(args.stateDir as string, state);
+        return json({ ok: true });
+      },
+    },
+    {
       name: "forge-status",
-      description: "Report forge completion status for a set of plan tasks (fresh state).",
-      schema: { planText: z.string() },
-      handler: async (args) => json(forgeStatus(initState(parsePlan(args.planText as string)))),
+      description:
+        "Report forge completion status for plan tasks. Loads persisted state from stateDir when provided; otherwise uses fresh state.",
+      schema: { planText: z.string(), stateDir: z.string().optional() },
+      handler: async (args) => {
+        const tasks = parsePlan(args.planText as string);
+        const stateDir = args.stateDir as string | undefined;
+        const state =
+          stateDir !== undefined
+            ? ((await loadState(stateDir)) ?? initState(tasks))
+            : initState(tasks);
+        return json(forgeStatus(state));
+      },
     },
     {
       name: "list-personas",

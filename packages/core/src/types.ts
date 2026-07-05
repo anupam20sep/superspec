@@ -1,3 +1,7 @@
+export type SpecType = "product" | "platform" | "infra" | "migration" | "spike";
+
+export type TaskKind = "code" | "verify" | "provision" | "signoff" | "doc-sync";
+
 export interface Requirement {
   id: string; // "FR-001"
   text: string;
@@ -9,6 +13,7 @@ export interface SuccessCriterion {
 }
 
 export interface Spec {
+  type: SpecType;
   requirements: Requirement[];
   criteria: SuccessCriterion[];
 }
@@ -21,6 +26,7 @@ export interface Task {
   frRefs: string[]; // ["FR-001", "FR-002"]
   dependsOn: string[]; // ["T000"]
   complexity: Complexity;
+  kind: TaskKind;
 }
 
 export interface MatrixRow {

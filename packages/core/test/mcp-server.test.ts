@@ -9,7 +9,18 @@ describe("MCP tool definitions", () => {
   it("exposes the expected tool names", () => {
     const names = buildToolDefinitions().map((t) => t.name).sort();
     expect(names).toEqual(
-      ["build-matrix", "forge-status", "lint-plan", "list-personas", "route-model", "scaffold"].sort(),
+      [
+        "build-matrix",
+        "forge-status",
+        "lint-design",
+        "lint-plan",
+        "lint-spec",
+        "list-personas",
+        "next-task",
+        "record-result",
+        "route-model",
+        "scaffold",
+      ].sort(),
     );
   });
 
@@ -40,6 +51,65 @@ describe("MCP tool definitions", () => {
     const schema = z.object(tool.schema);
     expect(() => schema.parse({ complexity: "moderate" })).not.toThrow();
     expect(() => schema.parse({ complexity: "complex" })).not.toThrow();
+  });
+});
+
+const FORGE_PLAN =
+  "### Task T001: First\n**Implements:** FR-001\n\n### Task T002: Second\n**Implements:** FR-002\n**Depends on:** T001\n";
+
+describe("forge loop MCP tools persisted round-trip", () => {
+  let root: string;
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "superspec-mcp-forge-"));
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("next-task, record-result, and forge-status persist state across calls", async () => {
+    const nextTool = buildToolDefinitions().find((t) => t.name === "next-task")!;
+    const recordTool = buildToolDefinitions().find((t) => t.name === "record-result")!;
+    const statusTool = buildToolDefinitions().find((t) => t.name === "forge-status")!;
+
+    const first = JSON.parse(
+      (await nextTool.handler({ planText: FORGE_PLAN, stateDir: root })).content[0].text,
+    );
+    expect(first.task.id).toBe("T001");
+
+    await recordTool.handler({
+      planText: FORGE_PLAN,
+      stateDir: root,
+      taskId: "T001",
+      passed: true,
+    });
+
+    const second = JSON.parse(
+      (await nextTool.handler({ planText: FORGE_PLAN, stateDir: root })).content[0].text,
+    );
+    expect(second.task.id).toBe("T002");
+
+    const status = JSON.parse(
+      (await statusTool.handler({ planText: FORGE_PLAN, stateDir: root })).content[0].text,
+    );
+    expect(status).toEqual({
+      total: 2,
+      done: 1,
+      blocked: 0,
+      pending: 1,
+      complete: false,
+    });
+  });
+
+  it("forge-status without stateDir uses fresh state", async () => {
+    const statusTool = buildToolDefinitions().find((t) => t.name === "forge-status")!;
+    const status = JSON.parse((await statusTool.handler({ planText: FORGE_PLAN })).content[0].text);
+    expect(status).toEqual({
+      total: 2,
+      done: 0,
+      blocked: 0,
+      pending: 2,
+      complete: false,
+    });
   });
 });
 

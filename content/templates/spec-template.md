@@ -6,7 +6,32 @@
 
 **Status**: Draft
 
+**Type**: [product | platform | infra | migration | spike]
+
+<!--
+  Classify the spec early — it drives plan task kinds, verification gates, and done-definition.
+  - product: user-facing capability shipped to production — done when acceptance scenarios pass in staging/prod
+  - platform: shared capability other teams consume — done when downstream specs can integrate without blockers
+  - infra: operational/runtime change — done when observability, rollback, and SLO checks pass
+  - migration: data or system cutover — done when parity verified and old path decommissioned or flagged off
+  - spike: time-boxed learning — done when findings documented and go/no-go recommendation recorded
+-->
+
 **Input**: User description: "$ARGUMENTS"
+
+## Required Reading
+
+| Path | Reason |
+|------|--------|
+| [e.g., `specs/001-auth/spec.md`] | [e.g., upstream dependency — auth contract this feature consumes] |
+| [e.g., `content/templates/constitution.md`] | [e.g., governance — Test-First and traceability rules for plan tasks] |
+| [e.g., `docs/architecture/overview.md`] | [e.g., system context — where this feature fits in the stack] |
+
+<!--
+  List artifacts a reader MUST load before scoping, designing, or implementing this feature.
+  Include sibling specs, ADRs, runbooks, and constitution tiers — not source files.
+  Remove rows that do not apply; every remaining row needs a concrete path and a one-line reason.
+-->
 
 ## User Scenarios & Testing *(mandatory)*
 

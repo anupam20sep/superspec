@@ -15,7 +15,7 @@
 - Runtime: [e.g. Node >= 20]
 - Dependencies: [e.g. no new runtime dependencies without approval]
 - Naming: [e.g. files kebab-case, exported symbols PascalCase/camelCase per language convention]
-- Testing: every task's implementation step must be preceded by a task's own failing-test step
+- Testing: **Kind: code** tasks require a failing-test step before implementation; other kinds use type-appropriate proof per constitution Principle 1
 
 ## Task Format
 
@@ -23,10 +23,11 @@ Each task below follows this shape:
 
 - **Implements**: the functional requirement ID(s) from spec.md this task satisfies
 - **Depends on**: task IDs that must land first, or `none`
+- **Kind**: `code` (red-green-refactor) | `verify` (run checks, capture evidence) | `provision` (infra/env setup) | `signoff` (human gate) | `doc-sync` (update docs/specs)
 - **Complexity**: `mechanical` (pure plumbing, low risk) | `moderate` | `complex` (needs design judgment)
 - **Files**: exact paths to create, modify, and test
 - **Interfaces**: what the task consumes from other tasks and what it produces for them
-- Five numbered steps: write a failing test, run it and confirm the failure, write the minimal implementation, run the test again and confirm it passes, then commit
+- Numbered steps: `code` tasks use five TDD steps (failing test → confirm fail → minimal impl → confirm pass → commit); other kinds use type-appropriate proof steps (see constitution Principle 1)
 
 ## Phase 1: Foundational Tasks
 
@@ -35,6 +36,8 @@ Each task below follows this shape:
 **Implements:** FR-001
 
 **Depends on:** none
+
+**Kind:** code
 
 **Complexity:** mechanical
 
@@ -92,7 +95,7 @@ Each task below follows this shape:
 
 ## Phase 2: [Next Phase Name]
 
-[Add further `### Task Txxx: [Name]` blocks here, following the exact shape modeled above: Implements/Depends on/Complexity/Files/Interfaces, then five steps — write the failing test with real code, run it and record the real expected failure, write the real minimal implementation, run the test again and confirm it passes, then commit with a real git command and message. Every task in this plan must be filled out this completely before implementation begins; no task may skip the red-green-refactor cycle.]
+[Add further `### Task Txxx: [Name]` blocks here, following the exact shape modeled above: Implements/Depends on/Kind/Complexity/Files/Interfaces, then numbered steps matched to Kind — `code` tasks use the five TDD steps shown above; `verify`/`provision`/`signoff`/`doc-sync` tasks use type-appropriate proof per constitution Principle 1. Every task in this plan must be filled out this completely before implementation begins.]
 
 ## No Empty Placeholders
 

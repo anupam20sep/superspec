@@ -1,9 +1,10 @@
-import type { Task, Complexity } from "./types.js";
+import type { Task, Complexity, TaskKind } from "./types.js";
 
 const TASK_RE = /^###\s+Task\s+([\w.]+):\s*(.+)/;
 const IMPL_RE = /^\*\*Implements:\*\*\s*(.+)/;
 const DEP_RE = /^\*\*Depends on:\*\*\s*(.+)/;
 const CX_RE = /^\*\*Complexity:\*\*\s*(mechanical|moderate|complex)/;
+const KIND_RE = /^\*\*Kind:\*\*\s*(code|verify|provision|signoff|doc-sync)/;
 
 function parseRefs(text: string, prefix: string): string[] {
   if (/^\s*none\s*$/i.test(text)) return [];
@@ -25,7 +26,14 @@ export function parsePlan(markdown: string): Task[] {
     const t = TASK_RE.exec(line);
     if (t) {
       flush();
-      current = { id: t[1], title: t[2].trim(), frRefs: [], dependsOn: [], complexity: "mechanical" };
+      current = {
+        id: t[1],
+        title: t[2].trim(),
+        frRefs: [],
+        dependsOn: [],
+        complexity: "mechanical",
+        kind: "code",
+      };
       continue;
     }
     if (!current) continue;
@@ -43,6 +51,11 @@ export function parsePlan(markdown: string): Task[] {
     const cx = CX_RE.exec(line);
     if (cx) {
       current.complexity = cx[1] as Complexity;
+      continue;
+    }
+    const kind = KIND_RE.exec(line);
+    if (kind) {
+      current.kind = kind[1] as TaskKind;
     }
   }
 

@@ -22,7 +22,7 @@ A minimal HTTP service with two endpoints: one to shorten a URL (FR-001, FR-002,
 
 **Project Type**: single small service (library + thin HTTP layer)
 
-**Performance Goals**: not a stated requirement in spec.md; no explicit SC ties to throughput, so no numeric target is set here — a NEEDS CLARIFICATION marker would be inserted if a real deployment required one, but for a worked example this is intentionally out of scope
+**Performance Goals**: not a stated requirement in spec.md; no explicit SC ties to throughput, so no numeric target is set for this worked example
 
 **Constraints**: short-code resolution must be O(1) average case (a hash-map lookup satisfies this trivially at this scale)
 
