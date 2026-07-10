@@ -2,7 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 **/.superspec/state.json
-docs/
+docs/superpowers/
 .superpowers/
 .claude/
 .cursor/

@@ -4,12 +4,18 @@
 
 SuperSpec fuses [GitHub Spec Kit](https://github.com/github/spec-kit)'s traceable specs (`FR-###`, user stories, `SC-###`) with [Superpowers](https://github.com/obra/superpowers)' mandatory TDD execution (red-green-refactor tasks, subagent dispatch, verification gates). One plugin, one shared engine — identical skills and tools in Claude Code and Cursor.
 
+[![npm version](https://img.shields.io/npm/v/%40superspec-dev%2Fcore?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/@superspec-dev/core)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+
 ---
 
 ## Table of contents
 
+- [What is SuperSpec](#what-is-superspec)
+- [How it works](#how-it-works)
+- [Quickstart](#quickstart)
+- [Documentation](#documentation)
 - [Why SuperSpec](#why-superspec)
-- [Quick start](#quick-start)
 - [Usage guide](#usage-guide)
 - [Lifecycle](#lifecycle)
 - [Verification tools](#verification-tools)
@@ -18,6 +24,160 @@ SuperSpec fuses [GitHub Spec Kit](https://github.com/github/spec-kit)'s traceabl
 - [Developing SuperSpec](#developing-superspec)
 - [Philosophy](#philosophy)
 - [Provenance & license](#provenance--license)
+
+---
+
+## What is SuperSpec
+
+SuperSpec is a spec-driven + TDD-driven framework for AI coding agents (Claude Code, Cursor, and more). It solves two problems that break agentic development at scale:
+
+1. **No traceability** — requirements drift from implementation; you cannot prove every `FR-###` shipped with a test.
+2. **Context rot** — long sessions degrade quality as the window fills with diffs, review text, and tool output.
+
+SuperSpec addresses traceability with a **coverage matrix** and mandatory TDD for code tasks. It addresses context rot by running **implement and review in fresh subagents** while persisting progress to **`status.md`** and **forge state on disk** — not conversation memory.
+
+---
+
+## How it works
+
+Each feature repeats the same lifecycle. The **forge** phase is where dispatch logic matters most:
+
+### Lifecycle (spec → ship)
+
+```
+explore/ingest → scope → refine → architect → plan → route → forge → validate → ship
+```
+
+### Forge dispatch loop (per task)
+
+The coordinator stays lean; heavy work runs in isolated subagents:
+
+1. **Select** — `next-task` loads persisted state; `begin-task` marks `in_progress`
+2. **Route** — `route-model` picks fast vs strong model for implementer **and** reviewer
+3. **Implement** — dispatch `agents/implementer.md` (red → green → refactor → commit)
+4. **Review** — dispatch `agents/task-reviewer.md` (fresh context, read-only; spec + quality verdicts)
+5. **Record** — `record-result` + `sync-status`; repeat until `forge-status` reports `complete: true`
+
+On review failure: resume the **same** implementer with findings → re-review. After 3 failures, task becomes `blocked` — escalate.
+
+| Platform | Dispatch mechanism | Guide |
+|----------|-------------------|-------|
+| **Claude Code** | `Agent` tool | [Dispatch on Claude Code](docs/how-to/dispatch-on-claude-code.md) |
+| **Cursor** | `Task` tool | [Dispatch on Cursor](docs/how-to/dispatch-on-cursor.md) |
+
+Full loop: [Run the forge loop](docs/how-to/run-the-forge-loop.md). Context model: [Dispatch and context](docs/explanation/dispatch-and-context.md).
+
+---
+
+## Quickstart
+
+### 1. Install the plugin
+
+**Cursor** — in Agent chat:
+
+```
+/add-plugin superspec
+```
+
+Or by URL: `/add-plugin https://github.com/anupam20sep/superspec`
+
+**Claude Code** — from GitHub (no clone required):
+
+```bash
+claude plugin marketplace add anupam20sep/superspec
+claude plugin install superspec@superspec-dev
+```
+
+Restart the session or run `/reload-plugins` after install. [Install details →](docs/how-to/install-on-your-runtime.md)
+
+In Claude Code chat:
+
+```
+/plugin marketplace add anupam20sep/superspec
+/plugin install superspec@superspec-dev
+```
+
+### 2. Bootstrap your repo (once)
+
+```bash
+npx -y @superspec-dev/core@latest init --root . --mode lite --verbose
+```
+
+Or tell the agent:
+
+> Initialize SuperSpec in this repo.
+
+This runs **`superspec-init`** — scaffolds templates, writes `constitution.md`, and optionally `program.md` (full mode).
+
+### 3. Start building
+
+| You have… | Say to the agent… | Tutorial |
+| --------- | ----------------- | -------- |
+| A new idea | "Let's explore and build …" | [Your first feature](docs/tutorials/your-first-feature.md) |
+| Existing docs or code | "Ingest requirements from …" | [Onboarding an existing codebase](docs/tutorials/onboarding-existing-codebase.md) |
+| A small bug | "Fix this bug: …" | `superspec-fix` skill |
+
+The **`using-superspec`** skill routes to the right lane. You don't memorize the lifecycle — the agent does.
+
+### MCP tools — how they work per platform
+
+**Skills and MCP are two layers:** skills (markdown lifecycle guidance) ship with the plugin; the engine (`@superspec-dev/core`) ships from **npm** via `npx`.
+
+| Platform | Skills | MCP setup |
+|----------|--------|-----------|
+| **Claude Code** | Bundled with plugin (`skills/`, `agents/`, `hooks/`) | **Bundled** — plugin `.mcp.json` runs `npx @superspec-dev/core mcp` automatically |
+| **Cursor** | Bundled with plugin (`skills/`, hooks) | **Manual** — add `.cursor/mcp.json` in your project (see below) |
+
+On first MCP use, `npx` downloads `@superspec-dev/core` from npm. Requires Node.js on your PATH. No `npm install` in your project.
+
+**Without MCP (Cursor only):** skills still work — the agent can run `npx @superspec-dev/core lint …` in the terminal during `validate`.
+
+**Cursor — add MCP to your project** (recommended):
+
+```json
+{
+  "mcpServers": {
+    "superspec": {
+      "command": "npx",
+      "args": ["-y", "@superspec-dev/core", "mcp"]
+    }
+  }
+}
+```
+
+Save as `.cursor/mcp.json` in your project root and restart Cursor. Details: [Install on your runtime](docs/how-to/install-on-your-runtime.md).
+
+## Documentation
+
+**Tutorials** — learning by doing:
+
+- [Your first feature](docs/tutorials/your-first-feature.md)
+- [Onboarding an existing codebase](docs/tutorials/onboarding-existing-codebase.md)
+
+**How-to guides** — task-focused recipes:
+
+- [Install on your runtime](docs/how-to/install-on-your-runtime.md)
+- [Run the forge loop](docs/how-to/run-the-forge-loop.md)
+- [Dispatch on Claude Code](docs/how-to/dispatch-on-claude-code.md)
+- [Dispatch on Cursor](docs/how-to/dispatch-on-cursor.md)
+- [Track forge progress](docs/how-to/track-forge-progress.md)
+- [Route parallel execution](docs/how-to/route-parallel-execution.md)
+- [Validate before ship](docs/how-to/validate-before-ship.md)
+
+**Reference** — authoritative facts:
+
+- [CLI and MCP tools](docs/reference/cli-and-mcp-tools.md)
+- [Forge state and status](docs/reference/forge-state.md)
+- [Agent prompt bodies](docs/reference/agents.md)
+- [Skills index](docs/reference/skills.md)
+
+**Explanation** — concepts and design:
+
+- [Dispatch and context](docs/explanation/dispatch-and-context.md)
+- [Traceability spine](docs/explanation/traceability-spine.md)
+- [Lifecycle overview](docs/explanation/lifecycle.md)
+
+Full index: [docs/README.md](docs/README.md).
 
 ---
 
@@ -92,85 +252,9 @@ SuperSpec's **coverage matrix** is the binding link. An `FR` with no covering ta
 | **Coordinate** (full mode) | Multi-spec backlog              | `program` / `status` | `program.md`                 | `forge-status`          |
 
 
-One plugin. One lifecycle. Skills guide the agent through each phase; `@superspec-dev/core` tools verify the artifacts.
+One plugin. One lifecycle. Skills guide the agent through each phase; `@superspec-dev/core` tools verify the artifacts. See [Lifecycle overview](docs/explanation/lifecycle.md) and [Skills index](docs/reference/skills.md).
 
----
-
-## Quick start
-
-### 1. Install the plugin
-
-**Cursor** — in Agent chat:
-
-```
-/add-plugin superspec
-```
-
-Or by URL: `/add-plugin https://github.com/anupam20sep/superspec`
-
-**Claude Code** — from GitHub (no clone required):
-
-```bash
-claude plugin marketplace add anupam20sep/superspec
-claude plugin install superspec@superspec-dev
-```
-
-In Claude Code chat:
-
-```
-/plugin marketplace add anupam20sep/superspec
-/plugin install superspec@superspec-dev
-```
-
-Restart the session or run `/reload-plugins` after install.
-
-### 2. Bootstrap your repo (once)
-
-Open your project and tell the agent:
-
-> Initialize SuperSpec in this repo.
-
-This runs **`superspec-init`** — scaffolds templates, writes `constitution.md`, and optionally `program.md` (full mode).
-
-### 3. Start building
-
-
-| You have…             | Say to the agent…            |
-| --------------------- | ---------------------------- |
-| A new idea            | "Let's explore and build …"  |
-| Existing docs or code | "Ingest requirements from …" |
-| A small bug           | "Fix this bug: …"            |
-
-
-The **`using-superspec`** skill routes to the right lane. You don't memorize the lifecycle — the agent does.
-
-### MCP tools — how they work per platform
-
-**Skills and MCP are two layers:** skills (markdown lifecycle guidance) ship with the plugin; the engine (`@superspec-dev/core`) ships from **npm** via `npx`.
-
-| Platform | Skills | MCP setup |
-|----------|--------|-----------|
-| **Claude Code** | Bundled with plugin (`skills/`, `agents/`, `hooks/`) | **Bundled** — plugin `.mcp.json` runs `npx @superspec-dev/core mcp` automatically |
-| **Cursor** | Bundled with plugin (`skills/`, hooks) | **Manual** — add `.cursor/mcp.json` in your project (see below) |
-
-On first MCP use, `npx` downloads `@superspec-dev/core` from npm. Requires Node.js on your PATH. No `npm install` in your project.
-
-**Without MCP (Cursor only):** skills still work — the agent can run `npx @superspec-dev/core lint …` in the terminal during `validate`.
-
-**Cursor — add MCP to your project** (recommended):
-
-```json
-{
-  "mcpServers": {
-    "superspec": {
-      "command": "npx",
-      "args": ["-y", "@superspec-dev/core", "mcp"]
-    }
-  }
-}
-```
-
-Save as `.cursor/mcp.json` in your project root and restart Cursor.
+**Worked example:** [`examples/url-shortener/`](examples/url-shortener/) — validate with `npm run dogfood:url-shortener`.
 
 ---
 
@@ -179,7 +263,7 @@ Save as `.cursor/mcp.json` in your project root and restart Cursor.
 ### First-time setup (per repository)
 
 1. **`superspec-init`** — choose **lite** (single spec) or **full** (multi-spec + `program.md`).
-2. **MCP** — automatic on Claude Code (plugin `.mcp.json`); on Cursor, add `.cursor/mcp.json` (see Quick start).
+2. **MCP** — automatic on Claude Code (plugin `.mcp.json`); on Cursor, add `.cursor/mcp.json` (see [Quickstart](#mcp-tools--how-they-work-per-platform)).
 3. **Custom agents** (optional) — if you already have `.cursor/agents/` or `.claude/agents/`, `route` and `forge` discover them automatically.
 
 ### Pick your lane
@@ -199,20 +283,21 @@ Save as `.cursor/mcp.json` in your project root and restart Cursor.
 scope → refine → architect → plan → [worktree] → route → forge → validate → ship
 ```
 
+Forge dispatch: [Run the forge loop](docs/how-to/run-the-forge-loop.md) · [Claude Code](docs/how-to/dispatch-on-claude-code.md) · [Cursor](docs/how-to/dispatch-on-cursor.md)
+
 ### What gets created in your project
 
-
-| Artifact                | Created by         | Purpose                                         |
-| ----------------------- | ------------------ | ----------------------------------------------- |
-| `constitution.md`       | `init`             | Governance — Test-First + traceability rules    |
-| `spec.md`               | `scope`            | Requirements (`FR-###`), Type, success criteria |
-| `design.md`             | `architect`        | Architecture, decisions, contracts              |
-| `plan.md`               | `plan`             | Executable tasks with **Kind** tags             |
-| `execution-map.md`      | `route`            | DAG, parallel windows, model routing            |
-| `sources.lock`          | `ingest`           | Provenance for brownfield requirements          |
-| `program.md`            | `init` (full mode) | Multi-spec backlog                              |
-| `.superspec/state.json` | `forge`            | Resumable task progress (gitignored)            |
-
+| Artifact | Created by | Purpose |
+| -------- | ---------- | ------- |
+| `constitution.md` | `init` | Governance — Test-First + traceability rules |
+| `spec.md` | `scope` | Requirements (`FR-###`), Type, success criteria |
+| `design.md` | `architect` | Architecture, decisions, contracts |
+| `plan.md` | `plan` | Executable tasks with **Kind** tags |
+| `execution-map.md` | `route` | DAG, parallel windows, model routing |
+| `status.md` | `forge` / `sync-status` | FR + task progress table (commit this) |
+| `sources.lock` | `ingest` | Provenance for brownfield requirements |
+| `program.md` | `init` (full mode) | Multi-spec backlog |
+| `.superspec/state.json` | `forge` | Machine forge state (gitignored) |
 
 ### Key concepts
 
@@ -228,8 +313,6 @@ scope → refine → architect → plan → [worktree] → route → forge → v
 ### Worked example
 
 [`examples/url-shortener/`](examples/url-shortener/) — a complete 4-requirement feature with real TDD implementation.
-
-Validate it from the repo root:
 
 ```bash
 npm run build
@@ -259,26 +342,26 @@ program + status  ← ongoing coordination (full mode)
 
 ### Skills reference
 
+| Skill | When to use |
+| ----- | ----------- |
+| `using-superspec` | Every session — routes to the right skill |
+| `superspec-init` | Once per repo bootstrap |
+| `superspec-ingest` | Brownfield — extract FRs from docs or code |
+| `superspec-explore` | Greenfield — shape an idea through dialogue |
+| `superspec-scope` | Write formal `spec.md` |
+| `superspec-refine` | Resolve `[NEEDS CLARIFICATION]` markers |
+| `superspec-architect` | Write `design.md` |
+| `superspec-plan` | Write TDD-executable `plan.md` |
+| `superspec-route` | Build `execution-map.md` |
+| `superspec-worktree` | Isolate plan/forge on a feature branch |
+| `superspec-forge` | Autonomous implementation loop |
+| `superspec-validate` | Run verification before claiming done |
+| `superspec-ship` | Merge, PR, keep, or discard |
+| `superspec-fix` | Small bugs — skip full lifecycle |
+| `superspec-program` | Maintain multi-spec backlog (full mode) |
+| `superspec-status` | Consolidated status across specs |
 
-| Skill                 | When to use                                 |
-| --------------------- | ------------------------------------------- |
-| `using-superspec`     | Every session — routes to the right skill   |
-| `superspec-init`      | Once per repo bootstrap                     |
-| `superspec-ingest`    | Brownfield — extract FRs from docs or code  |
-| `superspec-explore`   | Greenfield — shape an idea through dialogue |
-| `superspec-scope`     | Write formal `spec.md`                      |
-| `superspec-refine`    | Resolve `[NEEDS CLARIFICATION]` markers     |
-| `superspec-architect` | Write `design.md`                           |
-| `superspec-plan`      | Write TDD-executable `plan.md`              |
-| `superspec-route`     | Build `execution-map.md`                    |
-| `superspec-worktree`  | Isolate plan/forge on a feature branch      |
-| `superspec-forge`     | Autonomous implementation loop              |
-| `superspec-validate`  | Run verification before claiming done       |
-| `superspec-ship`      | Merge, PR, keep, or discard                 |
-| `superspec-fix`       | Small bugs — skip full lifecycle            |
-| `superspec-program`   | Maintain multi-spec backlog (full mode)     |
-| `superspec-status`    | Consolidated status across specs            |
-
+Full index: [Skills reference](docs/reference/skills.md)
 
 ### Non-negotiable principles
 
@@ -295,14 +378,14 @@ Everything else (simplicity, observability, versioning) is customizable per proj
 
 ## Verification tools
 
-`@superspec-dev/core` exposes the same tools as MCP and CLI.
+`@superspec-dev/core` exposes the same tools via MCP and CLI. Full reference: [CLI and MCP tools](docs/reference/cli-and-mcp-tools.md).
 
 ### Lint gates
 
 ```bash
-npx @superspec-dev/core lint --spec path/to/spec.md
-npx @superspec-dev/core lint --design path/to/design.md --specs-root .
-npx @superspec-dev/core lint --plan path/to/plan.md
+npx -y @superspec-dev/core@latest lint --spec path/to/spec.md
+npx -y @superspec-dev/core@latest lint --design path/to/design.md --specs-root .
+npx -y @superspec-dev/core@latest lint --plan path/to/plan.md
 ```
 
 Empty JSON array `[]` = pass.
@@ -310,37 +393,42 @@ Empty JSON array `[]` = pass.
 ### Coverage matrix
 
 ```bash
-npx @superspec-dev/core matrix --spec spec.md --plan plan.md
+npx -y @superspec-dev/core@latest matrix --spec spec.md --plan plan.md
 ```
 
 ### Forge state
 
-Persists to `<spec-dir>/.superspec/state.json`:
+Persists to `specs/<feature>/.superspec/state.json`. FR progress in `specs/<feature>/status.md`. See [Forge state and status](docs/reference/forge-state.md).
 
 ```bash
-npx @superspec-dev/core next-task     --plan plan.md --dir specs/001-feature
-npx @superspec-dev/core record-result --plan plan.md --dir specs/001-feature --task T001 --passed true
-npx @superspec-dev/core forge-status  --plan plan.md --dir specs/001-feature
+npx -y @superspec-dev/core@latest next-task     --plan plan.md --dir specs/<feature> --verbose
+npx -y @superspec-dev/core@latest begin-task     --plan plan.md --dir specs/<feature> --task T001 --verbose
+npx -y @superspec-dev/core@latest record-result  --plan plan.md --dir specs/<feature> --task T001 --passed true --spec specs/<feature>/spec.md --verbose
+npx -y @superspec-dev/core@latest sync-status     --spec specs/<feature>/spec.md --plan plan.md --dir specs/<feature> --verbose
+npx -y @superspec-dev/core@latest forge-status   --plan plan.md --dir specs/<feature> --spec specs/<feature>/spec.md --verbose
 ```
+
+Always pass `--dir` / `stateDir`. Add `--verbose` for human-readable summary + JSON.
 
 ### All tools
 
+| MCP tool | CLI | Purpose |
+| -------- | --- | ------- |
+| `init` | `init` | Bootstrap repo (`lite` / `full`) |
+| `build-matrix` | `matrix` | FR-to-task coverage; reports gaps |
+| `lint-spec` | `lint --spec` | Type, FR/SC completeness, placeholders |
+| `lint-plan` | `lint --plan` | Placeholders; TDD rules for code tasks |
+| `lint-design` | `lint --design` | Decisions, contracts, clarification markers |
+| `route-model` | — | Recommend strong vs fast model |
+| `scaffold` | `scaffold` | Render tier templates |
+| `next-task` | `next-task` | Next DAG-ready forge task |
+| `begin-task` | `begin-task` | Mark task `in_progress` |
+| `record-result` | `record-result` | Pass/fail; `--spec` refreshes `status.md` |
+| `sync-status` | `sync-status` | Write `status.md` from spec + plan + state |
+| `forge-status` | `forge-status` | `{total, done, blocked, pending, complete}` |
+| `list-personas` | `list-personas` | Discover `.claude/` / `.cursor/` agents |
 
-| MCP tool        | CLI             | Purpose                                     |
-| --------------- | --------------- | ------------------------------------------- |
-| `build-matrix`  | `matrix`        | FR-to-task coverage; reports gaps           |
-| `lint-spec`     | `lint --spec`   | Type, FR/SC completeness, placeholders      |
-| `lint-plan`     | `lint --plan`   | Placeholders; TDD rules for code tasks      |
-| `lint-design`   | `lint --design` | Decisions, contracts, clarification markers |
-| `route-model`   | —               | Recommend strong vs fast model              |
-| `scaffold`      | `scaffold`      | Render tier templates                       |
-| `next-task`     | `next-task`     | Next DAG-ready forge task                   |
-| `record-result` | `record-result` | Record task pass/fail                       |
-| `forge-status`  | `forge-status`  | `{total, done, blocked, pending, complete}` |
-| `list-personas` | —               | Discover project agent personas             |
-
-
-Start MCP server: `npx @superspec-dev/core mcp`
+Start MCP server: `npx -y @superspec-dev/core mcp`
 
 ---
 
@@ -410,7 +498,7 @@ claude plugin validate /path/to/superspec
 
 Or: `/add-plugin https://github.com/anupam20sep/superspec`
 
-Skills ship from `./skills/` (same layout as [obra/superpowers](https://github.com/obra/superpowers)). Add `.cursor/mcp.json` for MCP tools (see [Quick start](#mcp-tools--how-they-work-per-platform)).
+Skills ship from `./skills/` (same layout as [obra/superpowers](https://github.com/obra/superpowers)). Add `.cursor/mcp.json` for MCP tools — see [Install on your runtime](docs/how-to/install-on-your-runtime.md).
 
 ### MCP only (no full plugin)
 
@@ -427,16 +515,17 @@ Add to `.cursor/mcp.json` or `.mcp.json` in any project:
 }
 ```
 
-See [docs/install.md](docs/install.md) for full details. GitHub Copilot support is planned.
+See [Install on your runtime](docs/how-to/install-on-your-runtime.md). GitHub Copilot support is planned.
 
 ---
 
 ## What's in the repo
 
 ```
-.claude-plugin/     ← Claude marketplace manifest (plugin.json, marketplace.json)
+.claude-plugin/     ← Claude marketplace manifest
 .cursor-plugin/     ← Cursor plugin manifest
 .mcp.json           ← Claude plugin MCP (npx @superspec-dev/core)
+docs/               ← tutorials, how-to guides, reference, explanation
 content/skills/     ← canonical skill source (edit here)
 content/templates/  ← spec, plan, design, constitution templates
 content/agents/     ← subagent prompt bodies (implementer, reviewers)
@@ -487,6 +576,6 @@ npm run dogfood:url-shortener   # validation ladder on worked example
 
 ## Provenance & license
 
-SuperSpec reuses MIT-licensed work from Spec Kit and Superpowers. Every module is classified COPY / ADAPT / REIMPLEMENT / NEW in [docs/SOURCES.md](docs/SOURCES.md). See [NOTICE](NOTICE).
+SuperSpec reuses MIT-licensed work from Spec Kit and Superpowers. See [NOTICE](NOTICE) for provenance and license.
 
 MIT License — [LICENSE](LICENSE).
