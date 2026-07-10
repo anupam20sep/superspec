@@ -1,7 +1,7 @@
 node_modules/
 dist/
 *.tsbuildinfo
-.superspec/
+**/.superspec/state.json
 docs/
 .superpowers/
 .claude/

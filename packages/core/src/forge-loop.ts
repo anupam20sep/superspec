@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import type { Task } from "./types.js";
 
-export type TaskStatus = "pending" | "done" | "blocked";
+export type TaskStatus = "pending" | "in_progress" | "done" | "blocked";
 
 export interface ForgeState {
   tasks: Record<string, { status: TaskStatus; reviewFailures: number }>;
@@ -17,6 +17,7 @@ export interface ForgeStatus {
   done: number;
   blocked: number;
   pending: number;
+  inProgress: number;
   complete: boolean;
 }
 
@@ -38,6 +39,19 @@ export function nextTask(tasks: Task[], state: ForgeState): Task | null {
   return null;
 }
 
+export function markInProgress(state: ForgeState, taskId: string): ForgeState {
+  const s = state.tasks[taskId];
+  if (!s) throw new Error(`Unknown task id: ${taskId}`);
+  if (s.status === "blocked") {
+    throw new Error(`Cannot mark blocked task in progress: ${taskId}`);
+  }
+  if (s.status === "done") {
+    throw new Error(`Cannot mark completed task in progress: ${taskId}`);
+  }
+  s.status = "in_progress";
+  return state;
+}
+
 export function recordResult(
   state: ForgeState,
   taskId: string,
@@ -53,7 +67,11 @@ export function recordResult(
     s.status = "done";
   } else {
     s.reviewFailures += 1;
-    if (s.reviewFailures >= opts.maxReviewFailures) s.status = "blocked";
+    if (s.reviewFailures >= opts.maxReviewFailures) {
+      s.status = "blocked";
+    } else {
+      s.status = "pending";
+    }
   }
   return state;
 }
@@ -62,12 +80,14 @@ export function forgeStatus(state: ForgeState): ForgeStatus {
   const values = Object.values(state.tasks);
   const done = values.filter((v) => v.status === "done").length;
   const blocked = values.filter((v) => v.status === "blocked").length;
+  const inProgress = values.filter((v) => v.status === "in_progress").length;
   const pending = values.filter((v) => v.status === "pending").length;
   return {
     total: values.length,
     done,
     blocked,
     pending,
+    inProgress,
     complete: values.length > 0 && done === values.length,
   };
 }

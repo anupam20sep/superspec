@@ -120,6 +120,7 @@ describe("runCli forge loop persisted round-trip", () => {
       done: 1,
       blocked: 0,
       pending: 1,
+      inProgress: 0,
       complete: false,
     });
   });

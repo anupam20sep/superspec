@@ -10,8 +10,10 @@ describe("MCP tool definitions", () => {
     const names = buildToolDefinitions().map((t) => t.name).sort();
     expect(names).toEqual(
       [
+        "begin-task",
         "build-matrix",
         "forge-status",
+        "init",
         "lint-design",
         "lint-plan",
         "lint-spec",
@@ -20,6 +22,7 @@ describe("MCP tool definitions", () => {
         "record-result",
         "route-model",
         "scaffold",
+        "sync-status",
       ].sort(),
     );
   });
@@ -96,6 +99,7 @@ describe("forge loop MCP tools persisted round-trip", () => {
       done: 1,
       blocked: 0,
       pending: 1,
+      inProgress: 0,
       complete: false,
     });
   });
@@ -108,6 +112,7 @@ describe("forge loop MCP tools persisted round-trip", () => {
       done: 0,
       blocked: 0,
       pending: 2,
+      inProgress: 0,
       complete: false,
     });
   });

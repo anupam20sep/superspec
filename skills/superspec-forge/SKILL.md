@@ -11,7 +11,12 @@ You take an execution map (from superspec-route) or a task plan (from superspec-
 
 **Why subagents:** you delegate each task to a specialized agent with isolated context. By precisely crafting its instructions, you ensure it stays focused and succeeds. It never inherits your session's context or history — you construct exactly what it needs. This also preserves your own context for coordination work across the whole loop.
 
-**Core principle:** `nextTask`, `recordResult`, and `forgeStatus` are the three operations of the `@superspec-dev/core` library's forge-loop state machine (`packages/core/src/forge-loop.ts`): select a DAG-ready task -> route it by complexity -> dispatch a fresh implementer (red-green-refactor, zero prior context) -> dispatch a fresh reviewer (spec + quality verdicts) -> record the verdict -> repeat until status reports `complete: true`. Today, only `forge-status` is exposed as an MCP tool (and, as detailed below, only in its fresh-state form). `next-task` and `record-task-result` are not currently exposed as MCP tools or CLI subcommands. If you are working in a context that can run TypeScript/Node against `@superspec-dev/core`, drive the loop by importing and calling `nextTask`/`recordResult` directly; otherwise, approximate the same logic yourself — scan the plan's tasks, pick the first one whose dependencies are all recorded as `done`, and track each task's pass/fail counts and the blocked threshold in your own ledger — until these are exposed as callable tools in a future iteration.
+**Core principle:** `nextTask`, `recordResult`, `markInProgress`, `forgeStatus`, and `sync-status` are the forge operations exposed by `@superspec-dev/core` (CLI + MCP). Each spec directory keeps:
+
+- `specs/<feature>/.superspec/state.json` — machine state (gitignored)
+- `specs/<feature>/status.md` — **committed FR + task status table** (updated by `sync-status` / `record-result --spec`)
+
+Also use **TodoWrite** for in-session task visibility (same pattern as Superpowers `subagent-driven-development`).
 
 **Continuous execution:** do not pause to check in with your human partner between tasks. Execute all ready tasks without stopping. The only reasons to stop are: a task permanently `blocked` that you cannot resolve, ambiguity that genuinely prevents progress, or `forge-status` reporting `complete: true`. "Should I continue?" prompts waste your partner's time — they asked you to run the loop, so run it.
 
@@ -26,15 +31,17 @@ Everything below describes the subagent-driven form; where a platform lacks a na
 
 ## The Forge State Machine
 
-The loop is backed by a small, tested state machine (not a convention you have to remember correctly by hand) — implemented as the `nextTask`, `recordResult`, and `forgeStatus` functions in `packages/core/src/forge-loop.ts`. Of these, only `forge-status` is currently wired up as a callable MCP tool; `next-task` and `record-task-result` exist today as library functions you (or a future tool wrapper) call directly, not as tools you can invoke by name:
+The loop is backed by `packages/core/src/forge-loop.ts` and `packages/core/src/fr-status.ts`. Callable via CLI/MCP:
 
-- **`nextTask`** returns the next task that is `pending` AND whose dependencies are *all* `"done"` — a task with an in-progress or merely non-pending dependency is not offered, even if that dependency isn't `"blocked"`. It returns nothing once no ready task remains.
-- **`recordResult`** takes a pass/fail verdict for a task:
-  - **Pass:** marks the task `done`.
-  - **Fail:** increments that task's review-failure count. Once the count reaches the configured maximum, the task flips to `blocked` — permanently. This is enforced by the state machine itself: calling `recordResult` again on a task that is already `blocked` is rejected outright, not just discouraged. You cannot talk the loop into un-blocking a task by retrying; if a task is blocked, escalate it (see below) rather than looping on it.
-- **`forge-status`** (the one operation exposed as an MCP tool today) reports `{ total, done, blocked, pending, complete }` for the current task set. `complete` is `true` only when every task is `done` — a run with any `blocked` task never reports complete on its own; you must resolve the blockage (fix the plan, split the task, get human input) before the loop can finish.
+| Operation | CLI / MCP | Purpose |
+|-----------|-----------|---------|
+| `next-task` | ✓ | Next DAG-ready pending task |
+| `begin-task` | ✓ | Mark task `in_progress` |
+| `record-result` | ✓ | Pass/fail verdict; pass `--spec` to refresh `status.md` |
+| `sync-status` | ✓ | Write `status.md` from spec + plan + state |
+| `forge-status` | ✓ | Aggregate counts; pass `stateDir` to load persisted state |
 
-State is persisted to `.superspec/state.json` as you go, so a killed or restarted session can resume from disk instead of re-deriving progress from memory or re-running finished tasks. Be precise about where that resume happens today: it is a library/CLI-level capability of the forge state functions, not something the `forge-status` tool call itself guarantees — as currently exposed, that one call builds status fresh from the task/plan text rather than loading any prior saved state. If you are driving the loop through that tool directly, treat each call as evaluating the plan from scratch, and rely on your own progress ledger (or a CLI wrapper that does call the persisted-state loader) for true cross-session resume, not on that tool call alone.
+State persists to `specs/<feature>/.superspec/state.json`. FR-level status persists to `specs/<feature>/status.md` (commit this file).
 
 ## The Process
 
@@ -144,13 +151,25 @@ A task becomes permanently `blocked` after repeated review failures — this is 
 
 ## Durable Progress
 
-Conversation memory does not survive compaction. Track progress in the persisted forge state (`.superspec/state.json`) plus a short ledger of what happened per task (which model implemented it, review outcome, commit range) — after a compaction or restart, trust the saved state and `git log` over your own recollection, and resume at the first task `nextTask` (or your manual dependency scan) actually offers rather than re-deriving where you left off from memory.
+Conversation memory does not survive compaction. Track progress in **three layers**:
+
+1. **TodoWrite** — create todos from the plan at forge start; mark `in_progress` / `completed` per task (Superpowers pattern).
+2. **`specs/<feature>/status.md`** — FR-level table (`pending` / `in_progress` / `done` / `blocked`). Refresh via:
+   ```bash
+   npx @superspec-dev/core sync-status --spec specs/<feature>/spec.md --plan specs/<feature>/plan.md --dir specs/<feature>
+   ```
+   Or MCP `sync-status`. Call after `begin-task`, `record-result`, and at forge start.
+3. **`specs/<feature>/.superspec/state.json`** — machine forge state. Always pass `--dir specs/<feature>` (or `stateDir`) to forge MCP/CLI tools.
+
+After compaction or restart, trust `status.md`, `state.json`, and `git log` — not memory.
 
 ## Common Mistakes
 
 **Wrong:** retrying a blocked task by calling `recordResult` again with a different verdict, hoping it un-blocks. **Right:** the call is rejected (or, if you're approximating the state machine by hand, you must honor that same rule yourself); escalate instead.
 
-**Wrong:** treating `forge-status`'s fresh-from-plan-text call as if it reflects a resumed session's on-disk progress. **Right:** know that this particular call rebuilds state from the plan text each time — real cross-session resume relies on the persisted state file being loaded, which happens at the library/CLI level, not inside that call.
+**Wrong:** treating `forge-status` without `stateDir` as resumed progress. **Right:** pass `stateDir` / `--dir` so persisted state loads.
+
+**Wrong:** relying only on TodoWrite with no `status.md`. **Right:** refresh `status.md` after every state change so FR progress is visible in the repo.
 
 **Wrong:** accepting a reviewer report with only a quality verdict and no spec verdict (or vice versa). **Right:** both verdicts are mandatory; an incomplete report is not a pass.
 

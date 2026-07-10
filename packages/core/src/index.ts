@@ -8,3 +8,13 @@ export { lintSpec } from "./spec-lint.js";
 export { routeModel, type ModelClass } from "./model-router.js";
 export { scaffold } from "./scaffold.js";
 export * from "./forge-loop.js";
+export { initProject, defaultTemplatesDir, type InitMode, type InitOptions, type InitResult } from "./init.js";
+export {
+  buildStatusSnapshot,
+  renderStatusMarkdown,
+  writeStatusFile,
+  syncStatusFromFiles,
+  statusFilePath,
+  type FrStatus,
+  type StatusSnapshot,
+} from "./fr-status.js";

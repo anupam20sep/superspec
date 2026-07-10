@@ -16,7 +16,10 @@ import {
   forgeStatus,
   loadState,
   saveState,
+  markInProgress,
 } from "./forge-loop.js";
+import { initProject } from "./init.js";
+import { syncStatusFromFiles } from "./fr-status.js";
 
 export interface CliResult {
   code: number;
@@ -105,6 +108,88 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
     }
   }
 
+  if (command === "init") {
+    const { values } = parseArgs({
+      args: rest,
+      options: {
+        root: { type: "string", default: "." },
+        mode: { type: "string" },
+        templates: { type: "string" },
+        feature: { type: "string" },
+      },
+    });
+    if (values.mode !== "lite" && values.mode !== "full") {
+      return { code: 0, stdout: "Error: --mode must be lite or full" };
+    }
+    try {
+      const result = await initProject({
+        root: values.root as string,
+        mode: values.mode,
+        templatesDir: values.templates as string | undefined,
+        feature: values.feature as string | undefined,
+      });
+      return { code: 0, stdout: JSON.stringify(result, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
+  if (command === "sync-status") {
+    const { values } = parseArgs({
+      args: rest,
+      options: {
+        spec: { type: "string" },
+        plan: { type: "string" },
+        dir: { type: "string" },
+      },
+    });
+    const missing = [
+      values.spec === undefined ? "--spec" : null,
+      values.plan === undefined ? "--plan" : null,
+      values.dir === undefined ? "--dir" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    try {
+      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const state = (await loadState(values.dir as string)) ?? initState(tasks);
+      const result = await syncStatusFromFiles(
+        values.dir as string,
+        values.spec as string,
+        values.plan as string,
+        state,
+      );
+      return { code: 0, stdout: JSON.stringify(result, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
+  if (command === "begin-task") {
+    const { values } = parseArgs({
+      args: rest,
+      options: { plan: { type: "string" }, dir: { type: "string" }, task: { type: "string" } },
+    });
+    const missing = [
+      values.plan === undefined ? "--plan" : null,
+      values.dir === undefined ? "--dir" : null,
+      values.task === undefined ? "--task" : null,
+    ].filter((x): x is string => x !== null);
+    if (missing.length > 0) {
+      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+    }
+    try {
+      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const state = (await loadState(values.dir as string)) ?? initState(tasks);
+      markInProgress(state, values.task as string);
+      await saveState(values.dir as string, state);
+      return { code: 0, stdout: JSON.stringify({ ok: true }, null, 2) };
+    } catch (err) {
+      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+    }
+  }
+
   if (command === "scaffold") {
     const { values } = parseArgs({
       args: rest,
@@ -155,6 +240,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         dir: { type: "string" },
         task: { type: "string" },
         passed: { type: "string" },
+        spec: { type: "string" },
       },
     });
     const missing = [
@@ -176,7 +262,17 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         maxReviewFailures: 3,
       });
       await saveState(values.dir as string, state);
-      return { code: 0, stdout: JSON.stringify({ ok: true }, null, 2) };
+      let statusPath: string | undefined;
+      if (values.spec !== undefined) {
+        const { writeStatusFile } = await import("./fr-status.js");
+        statusPath = await writeStatusFile(
+          values.dir as string,
+          await readFile(values.spec as string, "utf8"),
+          await readFile(values.plan as string, "utf8"),
+          state,
+        );
+      }
+      return { code: 0, stdout: JSON.stringify({ ok: true, statusPath }, null, 2) };
     } catch (err) {
       return { code: 0, stdout: `Error: ${(err as Error).message}` };
     }
@@ -221,7 +317,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
 
   return {
     code: 0,
-    stdout: `Unknown command: ${command ?? "(none)"}. Try: matrix | lint | scaffold | list-personas | next-task | record-result | forge-status | mcp`,
+    stdout: `Unknown command: ${command ?? "(none)"}. Try: init | matrix | lint | scaffold | list-personas | next-task | begin-task | record-result | sync-status | forge-status | mcp`,
   };
 }
 

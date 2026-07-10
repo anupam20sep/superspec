@@ -9,8 +9,10 @@ import { lintDesign, lintDesignText } from "./design-lint.js";
 import { lintSpec } from "./spec-lint.js";
 import { routeModel } from "./model-router.js";
 import { scaffold } from "./scaffold.js";
-import { initState, forgeStatus, nextTask, recordResult, loadState, saveState } from "./forge-loop.js";
+import { initState, forgeStatus, nextTask, recordResult, loadState, saveState, markInProgress } from "./forge-loop.js";
 import { discoverPersonas } from "./persona-discovery.js";
+import { initProject } from "./init.js";
+import { buildStatusSnapshot, writeStatusFile } from "./fr-status.js";
 
 interface ToolContent {
   content: { type: "text"; text: string }[];
@@ -71,6 +73,69 @@ export function buildToolDefinitions(): ToolDef[] {
       handler: async (args) => json({ written: await scaffold(args.templatesDir as string, args.targetDir as string, {}) }),
     },
     {
+      name: "init",
+      description:
+        "Bootstrap SuperSpec in a repository: constitution.md at root, specs/, .superspec/templates/, optional program.md (full mode).",
+      schema: {
+        root: z.string(),
+        mode: z.enum(["lite", "full"]),
+        templatesDir: z.string().optional(),
+        feature: z.string().optional(),
+      },
+      handler: async (args) =>
+        json(
+          await initProject({
+            root: args.root as string,
+            mode: args.mode as "lite" | "full",
+            templatesDir: args.templatesDir as string | undefined,
+            feature: args.feature as string | undefined,
+          }),
+        ),
+    },
+    {
+      name: "sync-status",
+      description:
+        "Write or refresh specs/<feature>/status.md from spec, plan, and persisted forge state (FR + task progress).",
+      schema: {
+        specDir: z.string(),
+        specText: z.string(),
+        planText: z.string(),
+        stateDir: z.string().optional(),
+      },
+      handler: async (args) => {
+        const tasks = parsePlan(args.planText as string);
+        const stateDir = args.stateDir as string | undefined;
+        const state =
+          stateDir !== undefined
+            ? ((await loadState(stateDir)) ?? initState(tasks))
+            : initState(tasks);
+        const path = await writeStatusFile(
+          args.specDir as string,
+          args.specText as string,
+          args.planText as string,
+          state,
+        );
+        const snapshot = buildStatusSnapshot(
+          args.specText as string,
+          args.planText as string,
+          state,
+        );
+        return json({ path, snapshot });
+      },
+    },
+    {
+      name: "begin-task",
+      description: "Mark a forge task as in_progress and persist state.",
+      schema: { planText: z.string(), stateDir: z.string(), taskId: z.string() },
+      handler: async (args) => {
+        const tasks = parsePlan(args.planText as string);
+        const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
+        markInProgress(state, args.taskId as string);
+        await saveState(args.stateDir as string, state);
+        return json({ ok: true });
+      },
+    },
+    {
       name: "next-task",
       description: "Return the next DAG-ready pending task from persisted forge state.",
       schema: { planText: z.string(), stateDir: z.string() },
@@ -88,6 +153,8 @@ export function buildToolDefinitions(): ToolDef[] {
         stateDir: z.string(),
         taskId: z.string(),
         passed: z.boolean(),
+        specText: z.string().optional(),
+        specDir: z.string().optional(),
       },
       handler: async (args) => {
         const tasks = parsePlan(args.planText as string);
@@ -96,7 +163,18 @@ export function buildToolDefinitions(): ToolDef[] {
           maxReviewFailures: 3,
         });
         await saveState(args.stateDir as string, state);
-        return json({ ok: true });
+        let statusPath: string | undefined;
+        const specText = args.specText as string | undefined;
+        const specDir = args.specDir as string | undefined;
+        if (specText !== undefined && specDir !== undefined) {
+          statusPath = await writeStatusFile(
+            specDir,
+            specText,
+            args.planText as string,
+            state,
+          );
+        }
+        return json({ ok: true, statusPath });
       },
     },
     {

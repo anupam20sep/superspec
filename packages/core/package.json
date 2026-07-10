@@ -10,7 +10,7 @@
   },
   "main": "./dist/index.js",
   "bin": { "superspec": "./dist/cli.js" },
-  "files": ["dist"],
+  "files": ["dist", "templates"],
   "publishConfig": {
     "access": "public"
   },

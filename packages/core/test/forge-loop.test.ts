@@ -36,7 +36,7 @@ describe("forge status and escalation", () => {
     expect(state.tasks["T001"].status).toBe("blocked");
 
     const status = forgeStatus(state);
-    expect(status).toEqual({ total: 2, done: 0, blocked: 1, pending: 1, complete: false });
+    expect(status).toEqual({ total: 2, done: 0, blocked: 1, pending: 1, inProgress: 0, complete: false });
   });
 
   it("is complete only when every task is done", () => {
