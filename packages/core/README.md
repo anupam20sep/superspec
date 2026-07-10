@@ -7,6 +7,6 @@ The shared engine behind SuperSpec's spec-driven + TDD-driven lifecycle tools. I
 - **MCP server** — `npx @superspec-dev/core mcp`
 - **CLI** — `npx @superspec-dev/core matrix|lint|scaffold|list-personas`
 
-It depends on `@superspec-dev/render` (not yet published to npm) to parse and render shared skill content.
+It depends on `@superspec-dev/render` (frontmatter parser used by persona discovery) and can be installed via `npx @superspec-dev/core`.
 
 For full context on the SuperSpec methodology, installation, and usage, see the main [SuperSpec repository](https://github.com/anupam20sep/superspec)'s README and `docs/SOURCES.md`.

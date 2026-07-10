@@ -1,7 +1,13 @@
 # @superspec-dev/render
 
-Renders SuperSpec's shared skill content into the per-tool file layouts expected by Claude Code and Cursor, so both tools get identical guidance from a single source of truth.
+Renders SuperSpec's shared skill content from `content/skills/` into repo-root `skills/` — the same layout used by Claude Code and the Cursor plugin manifest (matching [obra/superpowers](https://github.com/obra/superpowers)).
 
-`@superspec-dev/render` is used internally by `@superspec-dev/core` (not yet published to npm) (for example, its frontmatter parser is used by persona discovery) and can also be run standalone via `npx @superspec-dev/render`.
+Used internally by `@superspec-dev/core` (frontmatter parsing for persona discovery) and runnable standalone:
 
-For full context on the SuperSpec methodology and how rendering fits into the overall lifecycle, see the main [SuperSpec repository](https://github.com/anupam20sep/superspec)'s README and `docs/SOURCES.md`.
+```bash
+npx @superspec-dev/render
+```
+
+From the SuperSpec repo root, `npm run render` runs the local build of this CLI after `npm run build`.
+
+For full context, see the main [SuperSpec repository](https://github.com/anupam20sep/superspec) README.
