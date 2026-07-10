@@ -4,11 +4,14 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SHEBANG = "#!/usr/bin/env node\n";
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "dist");
-const bins = ["cli.js", "mcp-server.js"];
+const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const bins = [
+  join(pkgRoot, "bin", "superspec.js"),
+  join(pkgRoot, "dist", "cli.js"),
+  join(pkgRoot, "dist", "mcp-server.js"),
+];
 
-for (const file of bins) {
-  const path = join(root, file);
+for (const path of bins) {
   let text = await readFile(path, "utf8");
   if (!text.startsWith("#!")) {
     text = SHEBANG + text;

@@ -166,7 +166,8 @@ export async function syncStatusFromFiles(
   const planText = await readFile(planPath, "utf8");
   const tasks = parsePlan(planText);
   const resolved = state ?? initState(tasks);
-  const path = await writeStatusFile(specDir, specText, planText, resolved);
-  const snapshot = buildStatusSnapshot(specText, planText, resolved);
+  const featureName = specDir.split(/[/\\]/).filter(Boolean).pop() ?? "feature";
+  const path = await writeStatusFile(specDir, specText, planText, resolved, featureName);
+  const snapshot = buildStatusSnapshot(specText, planText, resolved, featureName);
   return { path, snapshot };
 }

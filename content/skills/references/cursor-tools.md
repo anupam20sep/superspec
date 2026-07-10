@@ -6,7 +6,7 @@ This reference maps generic SuperSpec actions to Cursor's actual tools and mecha
 
 | Action | Cursor Mechanism | Configuration | Notes |
 |--------|------------------|----------------|-------|
-| **Dispatch a subagent for an isolated task** | Agent mode (single continuous thread) | N/A — built-in | Cursor's Agent mode runs autonomously in a single thread with full codebase access. Unlike Claude Code, there is no isolated subagent-dispatch primitive. All work happens in one continuous thread. See "Fallback Pattern" below. |
+| **Dispatch a subagent for an isolated task** | `Task` tool | N/A — built-in | Spawns an isolated subagent with its own context. Use `subagent_type` (e.g. `generalPurpose`, `code-reviewer`, `explore`) and explicit `model`. Use `resume` to continue the same subagent after review feedback. When `Task` is unavailable, use the inline fallback in `superspec-forge`. |
 | **Call an MCP tool** (e.g., build-matrix, lint-plan, scaffold, forge-status from @superspec-dev/core) | MCP tool via configured server | `.cursor/mcp.json` in project root | Cursor reads `.cursor/mcp.json` at startup (parallel to Claude Code's `.mcp.json`). Register MCP servers there; tools become available within Agent mode. |
 | **Invoke a skill or command** | SKILL.md (skill format) | `.cursor/skills/`, `.agents/skills/`, `~/.cursor/skills/`, `~/.agents/skills/`, or **installed plugin `skills/`** | Cursor recognizes SKILL.md files in `.cursor/skills/` (project-local), `.agents/skills/` (monorepo-aware), global skill dirs, and **skills shipped inside an installed plugin** (`.cursor-plugin/plugin.json` → `"skills": "./skills/"`, same as obra/superpowers). Skill identity is determined by the folder containing SKILL.md. |
 | **Track task or todo state** | `TodoWrite` tool | N/A — built-in | Create and update todos during forge and checklist skills. Cursor has native todo tracking — use it. |
@@ -18,32 +18,20 @@ This reference maps generic SuperSpec actions to Cursor's actual tools and mecha
 
 ## Patterns for Common Superspec Tasks
 
-### Dispatching a "subagent-like" workflow in Cursor
-Since Cursor lacks isolated subagent dispatch, use **prompt-driven sequential loops**:
+### Dispatching implementer + task-reviewer (forge loop)
 
-1. **Enter Agent mode** with a clear task description.
-2. **Define checkpoints**: "When you finish task 1, summarize results and ask what to do next."
-3. **Let Agent run to completion**, then hand off to the next task in a new Agent invocation.
+Use the `Task` tool for isolated implementer and reviewer passes (see `superspec-forge` → "Per-Task Dispatch Playbook"):
 
-Example structure:
-```
-[In Agent mode]
-You are implementing FR-001: Build user authentication.
-
-Acceptance criteria:
-- [ ] API endpoint /auth/login returns 200 with token
-- [ ] Token is valid for 1 hour
-
-When complete, summarize what was built and ask for the next task.
+```text
+Task({ subagent_type: "generalPurpose", model: "<routed>", prompt: "<filled agents/implementer.md>" })
+Task({ subagent_type: "code-reviewer", model: "<routed>", readonly: true, prompt: "<filled agents/task-reviewer.md>" })
 ```
 
-Then, in a fresh Agent invocation:
-```
-[Task results from previous Agent run]
+Resume the implementer with `resume: "<agent-id>"` when review finds issues.
 
-Now implement FR-002: Add password reset flow.
-...
-```
+### Sequential Agent-mode loop (no Task tool)
+
+If `Task` is unavailable, run implement and review in one Agent thread with an explicit review boundary, or split across separate Agent invocations with handoff summaries. See `superspec-forge` inline fallback.
 
 ### Calling MCP tools (e.g., `forge-status` from @superspec-dev/core)
 Register the MCP server in `.cursor/mcp.json`, then reference it in Agent mode or SKILL.md:
@@ -62,22 +50,17 @@ Cursor will load and apply the skill logic within its Agent thread.
 ### File operations in task loops
 Cursor's Agent mode handles file reads/writes automatically within the workflow. No separate read-then-edit step required — just prompt for the edits you need, and Agent will do them.
 
-## Fallback Patterns for Subagent Tasks
+## Fallback Patterns
 
-**Cursor has no native subagent isolation.** Instead:
+When `Task` subagent dispatch is unavailable:
 
-1. **Sequential single-thread loop**: Each task runs to full completion in one Agent invocation.
-2. **Explicit handoff**: At task boundaries, Agent summarizes and waits for you to confirm the next task (or provides a checkpoint for prompt reuse).
-3. **Parallel work limitation**: For tasks that Claude Code would dispatch in parallel, Cursor must run them serially in separate Agent invocations, combining results afterward.
-
-If you need true isolation (e.g., preventing a reviewer Agent from seeing implementer work), you would need to:
-- Complete the implementation Agent in one session.
-- Copy the results into a clean context for the reviewer Agent.
-- This is manual and breaks the automation flow that Claude Code's subagent dispatch provides.
+1. **Inline review boundary** — implement, then apply `agents/task-reviewer.md` in a separate explicit review step before `record-result`.
+2. **Sequential Agent invocations** — complete implementation in one session, paste diff + brief into a fresh session for review.
+3. **Parallel work** — run independent tasks serially; combine results in the coordinator.
 
 ## Limitations and Fallbacks
 
-- **No subagent isolation:** All work is one continuous thread. Cannot spawn truly isolated agents.
+- **Task tool required for true isolation** — without it, use inline fallback above.
 - **No background tasks:** All execution is synchronous within the Agent thread.
 - **TodoWrite for in-session progress:** Use during forge (see `superspec-forge`).
 - **status.md for FR progress:** Committed per spec folder; updated by `sync-status` MCP/CLI.

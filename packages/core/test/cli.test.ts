@@ -109,13 +109,13 @@ describe("runCli forge loop persisted round-trip", () => {
       "true",
     ]);
     expect(record.code).toBe(0);
-    expect(JSON.parse(record.stdout)).toEqual({ ok: true });
+    expect(JSON.parse(record.stdout)).toMatchObject({ ok: true, taskId: "T001", passed: true });
 
     const second = await runCli(["next-task", "--plan", planPath, "--dir", stateDir]);
     expect(JSON.parse(second.stdout).task.id).toBe("T002");
 
     const status = await runCli(["forge-status", "--plan", planPath, "--dir", stateDir]);
-    expect(JSON.parse(status.stdout)).toEqual({
+    expect(JSON.parse(status.stdout)).toMatchObject({
       total: 2,
       done: 1,
       blocked: 0,
@@ -123,6 +123,81 @@ describe("runCli forge loop persisted round-trip", () => {
       inProgress: 0,
       complete: false,
     });
+  });
+});
+
+describe("runCli forge loop verbose", () => {
+  const FORGE_PLAN =
+    "### Task T001: First\n**Implements:** FR-001\n\n### Task T002: Second\n**Implements:** FR-002\n**Depends on:** T001\n";
+
+  it("next-task, begin-task, record-result print verbose summaries via bin path", async () => {
+    const stateDir = join(root, "forge-verbose");
+    const planPath = join(stateDir, "plan.md");
+    await mkdir(stateDir, { recursive: true });
+    await writeFile(planPath, FORGE_PLAN, "utf8");
+
+    const next = await runCli(["next-task", "--plan", planPath, "--dir", stateDir, "--verbose"]);
+    expect(next.stdout).toContain("SuperSpec next-task: T001");
+
+    const begin = await runCli([
+      "begin-task",
+      "--plan",
+      planPath,
+      "--dir",
+      stateDir,
+      "--task",
+      "T001",
+      "--verbose",
+    ]);
+    expect(begin.stdout).toContain("T001 marked in progress");
+
+    const record = await runCli([
+      "record-result",
+      "--plan",
+      planPath,
+      "--dir",
+      stateDir,
+      "--task",
+      "T001",
+      "--passed",
+      "true",
+      "--verbose",
+    ]);
+    expect(record.stdout).toContain("T001 passed");
+  });
+});
+
+describe("runCli sync-status", () => {
+  it("writes status.md and prints JSON snapshot", async () => {
+    const specDir = join(root, "feature");
+    const specPath = join(specDir, "spec.md");
+    const planPath = join(specDir, "plan.md");
+    await mkdir(specDir, { recursive: true });
+    await writeFile(specPath, "- **FR-001**: shorten\n", "utf8");
+    await writeFile(
+      planPath,
+      "### Task T001: api\n**Implements:** FR-001\n**Depends on:** none\n",
+      "utf8",
+    );
+
+    const { code, stdout } = await runCli([
+      "sync-status",
+      "--spec",
+      specPath,
+      "--plan",
+      planPath,
+      "--dir",
+      specDir,
+      "--verbose",
+    ]);
+    expect(code).toBe(0);
+    expect(stdout).toContain("wrote");
+    expect(stdout).toContain("status.md");
+    const jsonStart = stdout.indexOf("{");
+    expect(jsonStart).toBeGreaterThan(-1);
+    const parsed = JSON.parse(stdout.slice(jsonStart));
+    expect(parsed.path).toContain("status.md");
+    expect(parsed.snapshot.frRows[0].fr).toBe("FR-001");
   });
 });
 

@@ -21,8 +21,9 @@ import {
 } from "./forge-loop.js";
 import { initProject } from "./init.js";
 import { syncStatusFromFiles } from "./fr-status.js";
-import { emitInitFailure, emitInitSuccess } from "./cli-output.js";
+import { emitInitFailure, emitInitSuccess, formatBeginTaskReport, formatCommandError, formatForgeStatusReport, formatNextTaskReport, formatRecordResultReport, formatSyncStatusReport } from "./cli-output.js";
 import { isDirectRun } from "./cli-entry.js";
+import { writeStatusFile } from "./fr-status.js";
 
 export interface CliResult {
   code: number;
@@ -156,6 +157,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         spec: { type: "string" },
         plan: { type: "string" },
         dir: { type: "string" },
+        verbose: { type: "boolean", short: "v" },
       },
     });
     const missing = [
@@ -164,7 +166,10 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
       values.dir === undefined ? "--dir" : null,
     ].filter((x): x is string => x !== null);
     if (missing.length > 0) {
-      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+      return {
+        code: 0,
+        stdout: formatCommandError("sync-status", new Error(`missing required argument ${missing.join(", ")}`)),
+      };
     }
     try {
       const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
@@ -175,16 +180,24 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         values.plan as string,
         state,
       );
-      return { code: 0, stdout: JSON.stringify(result, null, 2) };
+      return {
+        code: 0,
+        stdout: formatSyncStatusReport(result, values.verbose === true),
+      };
     } catch (err) {
-      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      return { code: 0, stdout: formatCommandError("sync-status", err) };
     }
   }
 
   if (command === "begin-task") {
     const { values } = parseArgs({
       args: rest,
-      options: { plan: { type: "string" }, dir: { type: "string" }, task: { type: "string" } },
+      options: {
+        plan: { type: "string" },
+        dir: { type: "string" },
+        task: { type: "string" },
+        verbose: { type: "boolean", short: "v" },
+      },
     });
     const missing = [
       values.plan === undefined ? "--plan" : null,
@@ -192,16 +205,26 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
       values.task === undefined ? "--task" : null,
     ].filter((x): x is string => x !== null);
     if (missing.length > 0) {
-      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+      return {
+        code: 0,
+        stdout: formatCommandError("begin-task", new Error(`missing required argument ${missing.join(", ")}`)),
+      };
     }
     try {
       const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
       const state = (await loadState(values.dir as string)) ?? initState(tasks);
       markInProgress(state, values.task as string);
       await saveState(values.dir as string, state);
-      return { code: 0, stdout: JSON.stringify({ ok: true }, null, 2) };
+      return {
+        code: 0,
+        stdout: formatBeginTaskReport(
+          values.task as string,
+          { dir: values.dir as string, cwd: process.cwd() },
+          values.verbose === true,
+        ),
+      };
     } catch (err) {
-      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      return { code: 0, stdout: formatCommandError("begin-task", err) };
     }
   }
 
@@ -228,22 +251,36 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
   if (command === "next-task") {
     const { values } = parseArgs({
       args: rest,
-      options: { plan: { type: "string" }, dir: { type: "string" } },
+      options: {
+        plan: { type: "string" },
+        dir: { type: "string" },
+        verbose: { type: "boolean", short: "v" },
+      },
     });
     const missing = [
       values.plan === undefined ? "--plan" : null,
       values.dir === undefined ? "--dir" : null,
     ].filter((x): x is string => x !== null);
     if (missing.length > 0) {
-      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+      return {
+        code: 0,
+        stdout: formatCommandError("next-task", new Error(`missing required argument ${missing.join(", ")}`)),
+      };
     }
     try {
       const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
       const state = (await loadState(values.dir as string)) ?? initState(tasks);
       const task = nextTask(tasks, state);
-      return { code: 0, stdout: JSON.stringify({ task }, null, 2) };
+      return {
+        code: 0,
+        stdout: formatNextTaskReport(
+          task,
+          { dir: values.dir as string, cwd: process.cwd() },
+          values.verbose === true,
+        ),
+      };
     } catch (err) {
-      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      return { code: 0, stdout: formatCommandError("next-task", err) };
     }
   }
 
@@ -256,6 +293,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         task: { type: "string" },
         passed: { type: "string" },
         spec: { type: "string" },
+        verbose: { type: "boolean", short: "v" },
       },
     });
     const missing = [
@@ -265,21 +303,27 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
       values.passed === undefined ? "--passed" : null,
     ].filter((x): x is string => x !== null);
     if (missing.length > 0) {
-      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+      return {
+        code: 0,
+        stdout: formatCommandError("record-result", new Error(`missing required argument ${missing.join(", ")}`)),
+      };
     }
     if (values.passed !== "true" && values.passed !== "false") {
-      return { code: 0, stdout: "Error: --passed must be true or false" };
+      return {
+        code: 0,
+        stdout: formatCommandError("record-result", new Error("--passed must be true or false")),
+      };
     }
     try {
       const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
       const state = (await loadState(values.dir as string)) ?? initState(tasks);
-      recordResult(state, values.task as string, values.passed === "true", {
+      const passed = values.passed === "true";
+      recordResult(state, values.task as string, passed, {
         maxReviewFailures: 3,
       });
       await saveState(values.dir as string, state);
       let statusPath: string | undefined;
       if (values.spec !== undefined) {
-        const { writeStatusFile } = await import("./fr-status.js");
         statusPath = await writeStatusFile(
           values.dir as string,
           await readFile(values.spec as string, "utf8"),
@@ -287,30 +331,60 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
           state,
         );
       }
-      return { code: 0, stdout: JSON.stringify({ ok: true, statusPath }, null, 2) };
+      return {
+        code: 0,
+        stdout: formatRecordResultReport(
+          values.task as string,
+          passed,
+          { dir: values.dir as string, statusPath, cwd: process.cwd() },
+          values.verbose === true,
+        ),
+      };
     } catch (err) {
-      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      return { code: 0, stdout: formatCommandError("record-result", err) };
     }
   }
 
   if (command === "forge-status") {
     const { values } = parseArgs({
       args: rest,
-      options: { plan: { type: "string" }, dir: { type: "string" } },
+      options: {
+        plan: { type: "string" },
+        dir: { type: "string" },
+        spec: { type: "string" },
+        verbose: { type: "boolean", short: "v" },
+      },
     });
     const missing = [
       values.plan === undefined ? "--plan" : null,
       values.dir === undefined ? "--dir" : null,
     ].filter((x): x is string => x !== null);
     if (missing.length > 0) {
-      return { code: 0, stdout: `Error: missing required argument ${missing.join(", ")}` };
+      return {
+        code: 0,
+        stdout: formatCommandError("forge-status", new Error(`missing required argument ${missing.join(", ")}`)),
+      };
     }
     try {
-      const tasks = parsePlan(await readFile(values.plan as string, "utf8"));
+      const planText = await readFile(values.plan as string, "utf8");
+      const tasks = parsePlan(planText);
       const state = (await loadState(values.dir as string)) ?? initState(tasks);
-      return { code: 0, stdout: JSON.stringify(forgeStatus(state), null, 2) };
+      const status = forgeStatus(state);
+      let statusPath: string | undefined;
+      if (values.spec !== undefined) {
+        const specText = await readFile(values.spec as string, "utf8");
+        statusPath = await writeStatusFile(values.dir as string, specText, planText, state);
+      }
+      return {
+        code: 0,
+        stdout: formatForgeStatusReport(
+          status,
+          { dir: values.dir as string, statusPath, cwd: process.cwd() },
+          values.verbose === true,
+        ),
+      };
     } catch (err) {
-      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      return { code: 0, stdout: formatCommandError("forge-status", err) };
     }
   }
 
@@ -336,16 +410,25 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
   };
 }
 
-async function main(): Promise<void> {
-  const { stdout } = await runCli(process.argv.slice(2));
+export async function runCliMain(argv: string[]): Promise<number> {
+  const { stdout, code } = await runCli(argv);
   if (stdout.length > 0) {
     process.stdout.write(stdout + "\n");
+  } else if (argv.length > 0 && argv[0] !== "mcp") {
+    process.stderr.write(
+      `SuperSpec: no output from command ${argv[0]!} (cwd=${process.cwd()}). Try --verbose or use bin/superspec.js entry.\n`,
+    );
   }
+  return code;
 }
 
 if (isDirectRun(import.meta.url, process.argv[1])) {
-  void main().catch((err: unknown) => {
-    process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
-    process.exitCode = 1;
-  });
+  void runCliMain(process.argv.slice(2))
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((err: unknown) => {
+      process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+      process.exitCode = 1;
+    });
 }

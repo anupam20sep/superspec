@@ -19,6 +19,17 @@ This reference maps generic SuperSpec actions to Claude Code's actual tools and 
 
 ## Patterns for Common Superspec Tasks
 
+### Running forge loop subagents (implementer + task-reviewer)
+
+Dispatch using plugin agent bodies `agents/implementer.md` and `agents/task-reviewer.md`:
+
+```text
+Agent({ prompt: "<filled implementer.md>", model: "<routed>" })
+Agent({ prompt: "<filled task-reviewer.md>", model: "<routed>" })  // fresh context, read-only
+```
+
+Resume the same implementer agent with review feedback. See `superspec-forge` → "Per-Task Dispatch Playbook".
+
 ### Running subagent-driven-development
 Dispatch an `implementer` subagent for task execution:
 ```

@@ -14,6 +14,14 @@ import { initState, forgeStatus, nextTask, recordResult, loadState, saveState, m
 import { discoverPersonas } from "./persona-discovery.js";
 import { initProject, formatInitReport, formatInitError } from "./init.js";
 import { buildStatusSnapshot, writeStatusFile } from "./fr-status.js";
+import {
+  formatBeginTaskReport,
+  formatForgeStatusReport,
+  formatNextTaskReport,
+  formatRecordResultReport,
+  formatSyncStatusReport,
+  formatCommandError,
+} from "./cli-output.js";
 import { isDirectRun } from "./cli-entry.js";
 
 interface ToolContent {
@@ -118,48 +126,93 @@ export function buildToolDefinitions(): ToolDef[] {
         specText: z.string(),
         planText: z.string(),
         stateDir: z.string().optional(),
+        verbose: z.boolean().optional(),
       },
       handler: async (args) => {
-        const tasks = parsePlan(args.planText as string);
-        const stateDir = args.stateDir as string | undefined;
-        const state =
-          stateDir !== undefined
-            ? ((await loadState(stateDir)) ?? initState(tasks))
-            : initState(tasks);
-        const path = await writeStatusFile(
-          args.specDir as string,
-          args.specText as string,
-          args.planText as string,
-          state,
-        );
-        const snapshot = buildStatusSnapshot(
-          args.specText as string,
-          args.planText as string,
-          state,
-        );
-        return json({ path, snapshot });
+        try {
+          const tasks = parsePlan(args.planText as string);
+          const stateDir = args.stateDir as string | undefined;
+          const state =
+            stateDir !== undefined
+              ? ((await loadState(stateDir)) ?? initState(tasks))
+              : initState(tasks);
+          const path = await writeStatusFile(
+            args.specDir as string,
+            args.specText as string,
+            args.planText as string,
+            state,
+          );
+          const snapshot = buildStatusSnapshot(
+            args.specText as string,
+            args.planText as string,
+            state,
+          );
+          const payload = { ok: true, path, snapshot };
+          const verbose = (args.verbose as boolean | undefined) ?? true;
+          return {
+            content: [
+              {
+                type: "text",
+                text: verbose ? formatSyncStatusReport({ path, snapshot }, true) : JSON.stringify(payload, null, 2),
+              },
+            ],
+          };
+        } catch (err) {
+          return { content: [{ type: "text", text: formatCommandError("sync-status", err) }] };
+        }
       },
     },
     {
       name: "begin-task",
       description: "Mark a forge task as in_progress and persist state.",
-      schema: { planText: z.string(), stateDir: z.string(), taskId: z.string() },
+      schema: {
+        planText: z.string(),
+        stateDir: z.string(),
+        taskId: z.string(),
+        verbose: z.boolean().optional(),
+      },
       handler: async (args) => {
-        const tasks = parsePlan(args.planText as string);
-        const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
-        markInProgress(state, args.taskId as string);
-        await saveState(args.stateDir as string, state);
-        return json({ ok: true });
+        try {
+          const tasks = parsePlan(args.planText as string);
+          const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
+          const taskId = args.taskId as string;
+          markInProgress(state, taskId);
+          await saveState(args.stateDir as string, state);
+          const verbose = (args.verbose as boolean | undefined) ?? true;
+          const text = formatBeginTaskReport(
+            taskId,
+            { dir: args.stateDir as string, cwd: process.cwd() },
+            verbose,
+          );
+          return { content: [{ type: "text", text }] };
+        } catch (err) {
+          return { content: [{ type: "text", text: formatCommandError("begin-task", err) }] };
+        }
       },
     },
     {
       name: "next-task",
       description: "Return the next DAG-ready pending task from persisted forge state.",
-      schema: { planText: z.string(), stateDir: z.string() },
+      schema: {
+        planText: z.string(),
+        stateDir: z.string(),
+        verbose: z.boolean().optional(),
+      },
       handler: async (args) => {
-        const tasks = parsePlan(args.planText as string);
-        const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
-        return json({ task: nextTask(tasks, state) });
+        try {
+          const tasks = parsePlan(args.planText as string);
+          const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
+          const task = nextTask(tasks, state);
+          const verbose = (args.verbose as boolean | undefined) ?? true;
+          const text = formatNextTaskReport(
+            task,
+            { dir: args.stateDir as string, cwd: process.cwd() },
+            verbose,
+          );
+          return { content: [{ type: "text", text }] };
+        } catch (err) {
+          return { content: [{ type: "text", text: formatCommandError("next-task", err) }] };
+        }
       },
     },
     {
@@ -172,41 +225,78 @@ export function buildToolDefinitions(): ToolDef[] {
         passed: z.boolean(),
         specText: z.string().optional(),
         specDir: z.string().optional(),
+        verbose: z.boolean().optional(),
       },
       handler: async (args) => {
-        const tasks = parsePlan(args.planText as string);
-        const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
-        recordResult(state, args.taskId as string, args.passed as boolean, {
-          maxReviewFailures: 3,
-        });
-        await saveState(args.stateDir as string, state);
-        let statusPath: string | undefined;
-        const specText = args.specText as string | undefined;
-        const specDir = args.specDir as string | undefined;
-        if (specText !== undefined && specDir !== undefined) {
-          statusPath = await writeStatusFile(
-            specDir,
-            specText,
-            args.planText as string,
-            state,
+        try {
+          const tasks = parsePlan(args.planText as string);
+          const state = (await loadState(args.stateDir as string)) ?? initState(tasks);
+          const taskId = args.taskId as string;
+          const passed = args.passed as boolean;
+          recordResult(state, taskId, passed, {
+            maxReviewFailures: 3,
+          });
+          await saveState(args.stateDir as string, state);
+          let statusPath: string | undefined;
+          const specText = args.specText as string | undefined;
+          const specDir = args.specDir as string | undefined;
+          if (specText !== undefined && specDir !== undefined) {
+            statusPath = await writeStatusFile(
+              specDir,
+              specText,
+              args.planText as string,
+              state,
+            );
+          }
+          const verbose = (args.verbose as boolean | undefined) ?? true;
+          const text = formatRecordResultReport(
+            taskId,
+            passed,
+            { dir: args.stateDir as string, statusPath, cwd: process.cwd() },
+            verbose,
           );
+          return { content: [{ type: "text", text }] };
+        } catch (err) {
+          return { content: [{ type: "text", text: formatCommandError("record-result", err) }] };
         }
-        return json({ ok: true, statusPath });
       },
     },
     {
       name: "forge-status",
       description:
         "Report forge completion status for plan tasks. Loads persisted state from stateDir when provided; otherwise uses fresh state.",
-      schema: { planText: z.string(), stateDir: z.string().optional() },
+      schema: {
+        planText: z.string(),
+        stateDir: z.string().optional(),
+        specText: z.string().optional(),
+        specDir: z.string().optional(),
+        verbose: z.boolean().optional(),
+      },
       handler: async (args) => {
-        const tasks = parsePlan(args.planText as string);
-        const stateDir = args.stateDir as string | undefined;
-        const state =
-          stateDir !== undefined
-            ? ((await loadState(stateDir)) ?? initState(tasks))
-            : initState(tasks);
-        return json(forgeStatus(state));
+        try {
+          const tasks = parsePlan(args.planText as string);
+          const stateDir = args.stateDir as string | undefined;
+          const state =
+            stateDir !== undefined
+              ? ((await loadState(stateDir)) ?? initState(tasks))
+              : initState(tasks);
+          const status = forgeStatus(state);
+          let statusPath: string | undefined;
+          const specText = args.specText as string | undefined;
+          const specDir = args.specDir as string | undefined;
+          if (specText !== undefined && specDir !== undefined) {
+            statusPath = await writeStatusFile(specDir, specText, args.planText as string, state);
+          }
+          const verbose = (args.verbose as boolean | undefined) ?? true;
+          const text = formatForgeStatusReport(
+            status,
+            { dir: stateDir, statusPath, cwd: process.cwd() },
+            verbose,
+          );
+          return { content: [{ type: "text", text }] };
+        } catch (err) {
+          return { content: [{ type: "text", text: formatCommandError("forge-status", err) }] };
+        }
       },
     },
     {

@@ -45,7 +45,15 @@ State persists to `specs/<feature>/.superspec/state.json`. FR-level status persi
 
 ## The Process
 
-The diagram below describes the loop's logic — what to select, route, implement, review, record, and repeat until complete — which holds regardless of how you invoke it. As covered above, only `forge-status` is currently a callable MCP tool; the `next-task` / `record-task-result` steps mean "call the `@superspec-dev/core` library functions if you can, otherwise apply the same logic yourself," not "call a tool of that name."
+The diagram below describes the loop's logic — what to select, route, implement, review, record, and repeat until complete. All forge operations are available via CLI and MCP; always pass `--dir` / `stateDir` so persisted state loads.
+
+```bash
+npx @superspec-dev/core next-task --plan specs/<feature>/plan.md --dir specs/<feature> --verbose
+npx @superspec-dev/core begin-task --plan specs/<feature>/plan.md --dir specs/<feature> --task T001 --verbose
+npx @superspec-dev/core record-result --plan specs/<feature>/plan.md --dir specs/<feature> --task T001 --passed true --spec specs/<feature>/spec.md --verbose
+```
+
+MCP `next-task`, `begin-task`, and `record-result` are verbose by default (human summary + JSON).
 
 ```dot
 digraph process {
@@ -129,16 +137,145 @@ Apply the same rule to the reviewer: a small mechanical diff does not need the s
 
 ## The Internal Review Loop
 
-After the implementer reports done, dispatch a fresh internal reviewer subagent — the same role that `task-reviewer` (a dedicated subagent body, not yet written as of this skill but referenced by name for when it exists) is meant to fill. Until then, construct the reviewer prompt yourself with:
+After the implementer reports done, dispatch a **fresh, independent reviewer** — never the same context that wrote the code. SuperSpec ships the reviewer body at **`agents/task-reviewer.md`** (plugin root; copy to `.claude/agents/task-reviewer.md` or `.cursor/agents/task-reviewer.md` in target projects if your platform resolves agents by path).
 
-- The task's acceptance criteria, copied verbatim from the plan or execution map — not paraphrased.
-- The project's constitution / global constraints, copied verbatim.
-- The diff or commit range the implementer produced.
-- Instructions to return **two independent verdicts**: spec compliance (did it build exactly what was asked, nothing more, nothing less) and code quality (is it well-built, tested, free of obvious defects).
+Fill the template placeholders before dispatch:
 
-**Both verdicts are required.** Never accept a reviewer report that only addresses one. Never let implementer self-review substitute for this independent pass — both exist because they catch different things.
+| Placeholder | Source |
+|-------------|--------|
+| `[TASK_NAME]`, `[FR_NUMBER]`, `[ACCEPTANCE_CRITERIA]` | Current task from plan / execution map — **verbatim** |
+| Constitution block | `constitution.md` at repo root — **verbatim** |
+| `[BASE_SHA]..[HEAD_SHA]` | Commit range the implementer produced |
+| `[DIFF_FILE]` or inline diff | `git diff BASE..HEAD` |
 
-On failure, send the reviewer's findings back to the *same* implementer subagent context as a follow-up dispatch (not a fresh one — it already has the working context for this task) with the specific findings to fix. Re-review after every fix. Do not move on to the next task while a review has open findings — either it resolves (record `passed: true`) or it exhausts retries and blocks (record `passed: false` until blocked).
+The reviewer returns **two independent verdicts** in one report (adapted from Superpowers' two-stage review, combined into one pass):
+
+1. **Spec compliance** — built exactly what was asked; test-first honored; traceability intact.
+2. **Code quality** — well-built, tested, maintainable; issues cited with `file:line`.
+
+**Both verdicts are required.** Never accept a report with only one. Never let implementer self-review substitute for this pass.
+
+**Pass criteria:** both verdicts ✅ (or "Approved" / "Compliant" / "High quality" per the template). Anything else is a fail.
+
+**On failure:** send findings to the **same** implementer context (resume, don't respawn) with specific fixes. Re-dispatch `task-reviewer` after every fix. Do not call `next-task` while review is open.
+
+**On pass:** `record-result --passed true --spec specs/<feature>/spec.md` then `sync-status`.
+
+**On repeated failure:** `record-result --passed false` (state machine allows up to 3 review failures, then `blocked`).
+
+## Per-Task Dispatch Playbook (Claude Code & Cursor)
+
+The forge coordinator runs this loop per task. Steps 1–2 and 7–8 are identical on both platforms (CLI/MCP). Steps 3–6 differ only in **how** you spawn implementer and reviewer.
+
+### Shared steps (every platform)
+
+```text
+1. route-model          → pick fast/strong for implementer AND reviewer
+2. next-task --verbose  → load persisted state from specs/<feature>/
+3. begin-task --task T00X --verbose
+4. [DISPATCH IMPLEMENTER — see platform section below]
+5. [DISPATCH task-reviewer — fresh context, readonly]
+6. If review fails → resume implementer with findings → back to 5
+7. record-result --passed true --spec specs/<feature>/spec.md --verbose
+8. sync-status --verbose (or forge-status --spec …)
+```
+
+Implementer prompt body: **`agents/implementer.md`**. Reviewer prompt body: **`agents/task-reviewer.md`**. Layer a discovered persona on the implementer only (see "Dispatching With a Discovered Persona" above).
+
+MCP equivalents: `next-task`, `begin-task`, `record-result` (pass `specText` + `specDir` to refresh `status.md`), `sync-status`, `forge-status` — always pass `stateDir` / `--dir specs/<feature>`.
+
+### Claude Code
+
+Claude Code has native **isolated subagent dispatch** via the `Agent` tool. See `references/claude-code-tools.md`.
+
+**Implementer** — fresh agent, zero prior forge context:
+
+```text
+Agent({
+  prompt: """
+  You are the implementer. Follow agents/implementer.md discipline.
+
+  [Paste filled implementer.md with TASK_NAME, FR, acceptance criteria, constitution excerpt]
+
+  Red-green-refactor. Run tests. Commit. Report BASE_SHA and HEAD_SHA.
+  """,
+  model: "<routed implementer model>"
+})
+```
+
+If the task's persona was discovered via `list-personas`, dispatch as that named `.claude/agents/<name>.md` agent when available; otherwise fold the persona description into the prompt.
+
+**Reviewer** — fresh agent, **read-only**, different model than implementer:
+
+```text
+Agent({
+  prompt: """
+  You are task-reviewer. Follow agents/task-reviewer.md exactly.
+  Read-only — do not modify files.
+
+  [Paste filled task-reviewer.md with task brief, constitution, diff, commit range]
+
+  Return spec compliance AND code quality verdicts.
+  """,
+  model: "<routed reviewer model>"
+})
+```
+
+**Fix loop:** resume the **same** implementer agent with reviewer findings; do not spawn a new implementer until the task passes or blocks.
+
+### Cursor
+
+Cursor supports isolated work via the **`Task` tool** (subagent dispatch). See `references/cursor-tools.md`. When `Task` is unavailable, use the inline fallback at the end of this section.
+
+**Implementer:**
+
+```text
+Task({
+  subagent_type: "generalPurpose",   // or a discovered .cursor/agents/<persona> if applicable
+  model: "<routed implementer model>",
+  description: "Implement T00X",
+  prompt: """
+  Follow agents/implementer.md. Zero prior context except the task brief below.
+
+  [Filled implementer.md: task, FR, acceptance criteria, constitution]
+
+  TDD: red → green → refactor. Run tests. Commit. Return BASE_SHA..HEAD_SHA and summary.
+  """
+})
+```
+
+**Reviewer** — must be a **separate** dispatch with **no implementer conversation history**:
+
+```text
+Task({
+  subagent_type: "code-reviewer",    // or generalPurpose with task-reviewer.md pasted
+  model: "<routed reviewer model>",
+  readonly: true,
+  description: "Review T00X",
+  prompt: """
+  Follow agents/task-reviewer.md. Read-only.
+
+  [Filled task-reviewer.md: acceptance criteria, constitution, git diff, commits]
+
+  Both verdicts required: spec compliance + code quality.
+  """
+})
+```
+
+**Fix loop:** `Task({ resume: "<implementer-agent-id>", prompt: "Fix these review findings: …" })` then re-run the reviewer `Task` with a fresh dispatch.
+
+**Personas:** `list-personas` scans `.cursor/agents/` and `.claude/agents/`. Use discovered names in `subagent_type` when the platform exposes them; otherwise paste persona description into the implementer prompt.
+
+### Inline fallback (either platform)
+
+When subagent/`Task` dispatch is unavailable, the coordinator implements and reviews **in one session** but must still enforce separation of concerns:
+
+1. Implement using `implementer.md` discipline (TDD, commit).
+2. **Stop.** Open a new message or explicit "review mode" boundary.
+3. Apply `task-reviewer.md` checklist against the diff **as if you were a different reviewer** — do not rationalize your own choices.
+4. Only then call `record-result`.
+
+This is slower and easier to cheat; prefer isolated dispatch on both Claude Code and Cursor when the tooling exists.
 
 ## Stuck-Task Escalation
 
@@ -156,9 +293,13 @@ Conversation memory does not survive compaction. Track progress in **three layer
 1. **TodoWrite** — create todos from the plan at forge start; mark `in_progress` / `completed` per task (Superpowers pattern).
 2. **`specs/<feature>/status.md`** — FR-level table (`pending` / `in_progress` / `done` / `blocked`). Refresh via:
    ```bash
-   npx @superspec-dev/core sync-status --spec specs/<feature>/spec.md --plan specs/<feature>/plan.md --dir specs/<feature>
+   npx @superspec-dev/core sync-status --spec specs/<feature>/spec.md --plan specs/<feature>/plan.md --dir specs/<feature> --verbose
    ```
-   Or MCP `sync-status`. Call after `begin-task`, `record-result`, and at forge start.
+   Or MCP `sync-status` (verbose by default). Call after `begin-task`, `record-result`, and at forge start.
+   For a quick forge checkpoint without a separate sync call:
+   ```bash
+   npx @superspec-dev/core forge-status --plan specs/<feature>/plan.md --dir specs/<feature> --spec specs/<feature>/spec.md --verbose
+   ```
 3. **`specs/<feature>/.superspec/state.json`** — machine forge state. Always pass `--dir specs/<feature>` (or `stateDir`) to forge MCP/CLI tools.
 
 After compaction or restart, trust `status.md`, `state.json`, and `git log` — not memory.
@@ -175,6 +316,8 @@ After compaction or restart, trust `status.md`, `state.json`, and `git log` — 
 
 **Wrong:** dispatching the next task's implementer while the current task still has open review findings. **Right:** resolve to `done` or `blocked` before advancing.
 
+**Wrong:** recording `passed: true` without a `task-reviewer` pass (implementer self-review only). **Right:** always dispatch reviewer per playbook above, then `record-result`.
+
 **Wrong:** reusing one implementer subagent's context across multiple unrelated tasks to save dispatch overhead. **Right:** one fresh implementer per task — cross-task context pollution is exactly what fresh dispatch avoids.
 
 ## Red Flags
@@ -183,7 +326,8 @@ After compaction or restart, trust `status.md`, `state.json`, and `git log` — 
 - Retry an already-blocked task, or interpret a rejected (or manually-detected) `recordResult` outcome as something to work around
 - Skip either review verdict (spec compliance AND code quality are both required every time)
 - Move to the next task while the current one has open, unresolved review findings
-- Let implementer self-review stand in for the independent reviewer subagent
+- Let implementer self-review stand in for `agents/task-reviewer.md`
+- Call `record-result --passed true` without a completed reviewer report
 - Claim `complete` because nothing is left to dispatch — only `forge-status`'s `complete: true` counts
 - Assume the `forge-status` tool call reflects a resumed session's saved progress
 - Dispatch a subagent without an explicit model — an omitted model silently defeats the routing rule

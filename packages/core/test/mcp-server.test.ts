@@ -75,7 +75,7 @@ describe("forge loop MCP tools persisted round-trip", () => {
     const statusTool = buildToolDefinitions().find((t) => t.name === "forge-status")!;
 
     const first = JSON.parse(
-      (await nextTool.handler({ planText: FORGE_PLAN, stateDir: root })).content[0].text,
+      (await nextTool.handler({ planText: FORGE_PLAN, stateDir: root, verbose: false })).content[0].text,
     );
     expect(first.task.id).toBe("T001");
 
@@ -87,14 +87,15 @@ describe("forge loop MCP tools persisted round-trip", () => {
     });
 
     const second = JSON.parse(
-      (await nextTool.handler({ planText: FORGE_PLAN, stateDir: root })).content[0].text,
+      (await nextTool.handler({ planText: FORGE_PLAN, stateDir: root, verbose: false })).content[0].text,
     );
     expect(second.task.id).toBe("T002");
 
     const status = JSON.parse(
-      (await statusTool.handler({ planText: FORGE_PLAN, stateDir: root })).content[0].text,
+      (await statusTool.handler({ planText: FORGE_PLAN, stateDir: root, verbose: false })).content[0]
+        .text,
     );
-    expect(status).toEqual({
+    expect(status).toMatchObject({
       total: 2,
       done: 1,
       blocked: 0,
@@ -106,8 +107,10 @@ describe("forge loop MCP tools persisted round-trip", () => {
 
   it("forge-status without stateDir uses fresh state", async () => {
     const statusTool = buildToolDefinitions().find((t) => t.name === "forge-status")!;
-    const status = JSON.parse((await statusTool.handler({ planText: FORGE_PLAN })).content[0].text);
-    expect(status).toEqual({
+    const status = JSON.parse(
+      (await statusTool.handler({ planText: FORGE_PLAN, verbose: false })).content[0].text,
+    );
+    expect(status).toMatchObject({
       total: 2,
       done: 0,
       blocked: 0,
