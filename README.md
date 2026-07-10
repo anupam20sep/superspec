@@ -108,12 +108,21 @@ One plugin. One lifecycle. Skills guide the agent through each phase; `@superspe
 
 Or by URL: `/add-plugin https://github.com/anupam20sep/superspec`
 
-**Claude Code:**
+**Claude Code** — from GitHub (no clone required):
 
 ```bash
-git clone https://github.com/anupam20sep/superspec.git
-cd superspec && ./scripts/install.sh
+claude plugin marketplace add anupam20sep/superspec
+claude plugin install superspec@superspec-dev
 ```
+
+In Claude Code chat:
+
+```
+/plugin marketplace add anupam20sep/superspec
+/plugin install superspec@superspec-dev
+```
+
+Restart the session or run `/reload-plugins` after install.
 
 ### 2. Bootstrap your repo (once)
 
@@ -121,7 +130,7 @@ Open your project and tell the agent:
 
 > Initialize SuperSpec in this repo.
 
-This runs `**superspec-init**` — scaffolds templates, writes `constitution.md`, and optionally `program.md` (full mode).
+This runs **`superspec-init`** — scaffolds templates, writes `constitution.md`, and optionally `program.md` (full mode).
 
 ### 3. Start building
 
@@ -133,29 +142,22 @@ This runs `**superspec-init**` — scaffolds templates, writes `constitution.md`
 | A small bug           | "Fix this bug: …"            |
 
 
-The `**using-superspec**` skill routes to the right lane. You don't memorize the lifecycle — the agent does.
+The **`using-superspec`** skill routes to the right lane. You don't memorize the lifecycle — the agent does.
 
-### MCP tools — optional, but recommended
+### MCP tools — how they work per platform
 
-**Skills and MCP tools are two different layers:**
+**Skills and MCP are two layers:** skills (markdown lifecycle guidance) ship with the plugin; the engine (`@superspec-dev/core`) ships from **npm** via `npx`.
 
+| Platform | Skills | MCP setup |
+|----------|--------|-----------|
+| **Claude Code** | Bundled with plugin (`skills/`, `agents/`, `hooks/`) | **Bundled** — plugin `.mcp.json` runs `npx @superspec-dev/core mcp` automatically |
+| **Cursor** | Bundled with plugin (`skills/`, hooks) | **Manual** — add `.cursor/mcp.json` in your project (see below) |
 
-| Layer         | What it is                                                              | Installed by `/add-plugin`? |
-| ------------- | ----------------------------------------------------------------------- | --------------------------- |
-| **Skills**    | Markdown instructions — *when* to explore, scope, plan, forge, validate | **Yes**                     |
-| **MCP tools** | Node.js executables — *deterministic* lint, matrix, forge-state checks  | **No** (npm via `npx`)      |
+On first MCP use, `npx` downloads `@superspec-dev/core` from npm. Requires Node.js on your PATH. No `npm install` in your project.
 
+**Without MCP (Cursor only):** skills still work — the agent can run `npx @superspec-dev/core lint …` in the terminal during `validate`.
 
-**Why they're separate:** the plugin ships from **GitHub** (skills + hooks). The engine ships from **npm** (compiled TypeScript). Cursor's plugin format doesn't bundle npm packages.
-
-**Why MCP is optional:** you don't need it to use SuperSpec. Skills tell the agent the full lifecycle; during `validate`, the agent can run the same checks in the terminal:
-
-```bash
-npx @superspec-dev/core lint --spec spec.md
-npx @superspec-dev/core matrix --spec spec.md --plan plan.md
-```
-
-**Why you'd still add MCP:** native tool calls return structured JSON the agent can trust without parsing shell output; faster iteration during `validate` and `forge`; byte-identical behavior across Claude Code and Cursor. One-time setup in `.cursor/mcp.json`:
+**Cursor — add MCP to your project** (recommended):
 
 ```json
 {
@@ -168,7 +170,7 @@ npx @superspec-dev/core matrix --spec spec.md --plan plan.md
 }
 ```
 
-`npx` downloads `@superspec-dev/core` from npm on first use — no `npm install` in your project.
+Save as `.cursor/mcp.json` in your project root and restart Cursor.
 
 ---
 
@@ -176,8 +178,8 @@ npx @superspec-dev/core matrix --spec spec.md --plan plan.md
 
 ### First-time setup (per repository)
 
-1. `**superspec-init**` — choose **lite** (single spec) or **full** (multi-spec + `program.md`).
-2. **MCP** (optional) — add the config above if you want tools beyond skills.
+1. **`superspec-init`** — choose **lite** (single spec) or **full** (multi-spec + `program.md`).
+2. **MCP** — automatic on Claude Code (plugin `.mcp.json`); on Cursor, add `.cursor/mcp.json` (see Quick start).
 3. **Custom agents** (optional) — if you already have `.cursor/agents/` or `.claude/agents/`, `route` and `forge` discover them automatically.
 
 ### Pick your lane
@@ -218,14 +220,14 @@ scope → refine → architect → plan → [worktree] → route → forge → v
 
 **Task Kind** (`code` | `verify` | `provision` | `signoff` | `doc-sync`) — set per task in `plan.md`:
 
-- `**code**` → mandatory red-green-refactor (test code + impl code + command + commit message)
+- **`code`** → mandatory red-green-refactor (test code + impl code + command + commit message)
 - **Other kinds** → type-appropriate proof, not TDD cycles
 
 **Coverage matrix** — every `FR-###` must map to at least one task; gaps are reported, not guessed.
 
 ### Worked example
 
-`[examples/url-shortener/](examples/url-shortener/)` — a complete 4-requirement feature with real TDD implementation.
+[`examples/url-shortener/`](examples/url-shortener/) — a complete 4-requirement feature with real TDD implementation.
 
 Validate it from the repo root:
 
@@ -280,7 +282,7 @@ program + status  ← ongoing coordination (full mode)
 
 ### Non-negotiable principles
 
-From `[content/templates/constitution.md](content/templates/constitution.md)`:
+From [`content/templates/constitution.md`](content/templates/constitution.md):
 
 1. **Test-First for code tasks** — every **Kind: code** task is red-green-refactor. No optional tests.
 2. **Traceability spine** — every `FR-###` maps to a task and a passing test. The matrix must be complete.
@@ -344,40 +346,32 @@ Start MCP server: `npx @superspec-dev/core mcp`
 
 ## Install
 
-### What `/add-plugin` installs vs npm packages
+### What the plugin installs vs what npm provides
 
-Installing from GitHub (`/add-plugin superspec` or `/add-plugin https://github.com/anupam20sep/superspec`) pulls the **plugin bundle** — not npm packages.
+Both Cursor and Claude Code install from the **GitHub repo** — skills, hooks, and (for Claude) agents. The verification engine is always **`@superspec-dev/core` from npm**, fetched by `npx` on first use.
 
-
-| Component                             | Installed by `/add-plugin`? | How you get it                                               |
-| ------------------------------------- | --------------------------- | ------------------------------------------------------------ |
-| **Skills** (`skills/`)                | **Yes**                     | Bundled in the plugin from GitHub                            |
-| **Hooks** (`hooks/hooks-cursor.json`) | **Yes**                     | Bundled in the plugin                                        |
-| `**@superspec-dev/core**` (MCP + CLI) | **No**                      | `npx` downloads from npm on first use — see MCP config below |
-| `**@superspec-dev/render**`           | **No**                      | Maintainer tool only — you never need this to use SuperSpec  |
-
-
-**In practice:**
-
-1. `**/add-plugin**` → agent gets lifecycle skills immediately. No `npm install` in your project.
-2. **MCP tools** (recommended) → add `.cursor/mcp.json` once per project. See [Why MCP is optional](#mcp-tools--optional-but-recommended) above.
-3. **Without MCP** → skills still work. The agent runs the same `npx @superspec-dev/core …` commands in the terminal when `validate` or other skills require verification.
-
-`@superspec-dev/render` is only for SuperSpec maintainers who edit `content/skills/` and run `npm run render`. End users and marketplace installs never need it.
+| Component | Cursor (`/add-plugin`) | Claude Code (`superspec@superspec-dev`) | Source |
+|-----------|------------------------|----------------------------------------|--------|
+| Skills (`skills/`) | Yes | Yes | GitHub |
+| Hooks | `hooks-cursor.json` | `hooks/hooks.json` | GitHub |
+| Agents | — | `agents/` | GitHub |
+| MCP config | You add `.cursor/mcp.json` | Bundled (repo `.mcp.json`) | npm via `npx` |
+| `@superspec-dev/render` | No | No | Maintainers only |
 
 ```
-/add-plugin superspec          skills + hooks  (from GitHub)
+GitHub plugin install
         │
-        ├─► Agent follows superspec-* skills in any project
+        ├─► skills/ + hooks (+ agents on Claude)
         │
-        └─► Optional: .cursor/mcp.json
-                    │
-                    └─► npx @superspec-dev/core mcp   (from npm, on first MCP start)
+        └─► MCP engine: npx @superspec-dev/core mcp  (from npm, on first use)
+              │
+              ├─ Claude: automatic (plugin .mcp.json)
+              └─ Cursor: manual (.cursor/mcp.json in your project)
 ```
 
 ### Claude Code
 
-From GitHub (recommended — no clone required):
+**From GitHub (recommended):**
 
 ```bash
 claude plugin marketplace add anupam20sep/superspec
@@ -391,20 +385,22 @@ In Claude Code chat:
 /plugin install superspec@superspec-dev
 ```
 
-The plugin bundles **skills**, **agents**, **hooks**, and **MCP** (via repo-root `.mcp.json` → `npx @superspec-dev/core mcp`). On first MCP use, `npx` downloads `@superspec-dev/core` from npm.
+Includes skills, agents, hooks, and MCP (`.mcp.json` → `npx @superspec-dev/core mcp`). Restart or `/reload-plugins` after install.
 
-Local clone (for contributors):
+**Local clone (contributors):**
 
 ```bash
 git clone https://github.com/anupam20sep/superspec.git
 cd superspec && ./scripts/install.sh
 ```
 
-Validate before publishing changes:
+Validate plugin changes:
 
 ```bash
 claude plugin validate /path/to/superspec
 ```
+
+**Community marketplace:** submit for public listing at [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit) after `claude plugin validate` passes.
 
 ### Cursor
 
@@ -412,30 +408,43 @@ claude plugin validate /path/to/superspec
 /add-plugin superspec
 ```
 
-Skills ship from `./skills/` in the plugin repo (same layout as [obra/superpowers](https://github.com/obra/superpowers)). No `.cursor/` folder needed in your project for skills.
+Or: `/add-plugin https://github.com/anupam20sep/superspec`
+
+Skills ship from `./skills/` (same layout as [obra/superpowers](https://github.com/obra/superpowers)). Add `.cursor/mcp.json` for MCP tools (see [Quick start](#mcp-tools--how-they-work-per-platform)).
 
 ### MCP only (no full plugin)
 
-Add to `.cursor/mcp.json` in any project:
+Add to `.cursor/mcp.json` or `.mcp.json` in any project:
 
 ```json
-{ "mcpServers": { "superspec": { "command": "npx", "args": ["-y", "@superspec-dev/core", "mcp"] } } }
+{
+  "mcpServers": {
+    "superspec": {
+      "command": "npx",
+      "args": ["-y", "@superspec-dev/core", "mcp"]
+    }
+  }
+}
 ```
 
-See [docs/install.md](docs/install.md) for details. GitHub Copilot support is planned.
+See [docs/install.md](docs/install.md) for full details. GitHub Copilot support is planned.
 
 ---
 
 ## What's in the repo
 
 ```
+.claude-plugin/     ← Claude marketplace manifest (plugin.json, marketplace.json)
+.cursor-plugin/     ← Cursor plugin manifest
+.mcp.json           ← Claude plugin MCP (npx @superspec-dev/core)
 content/skills/     ← canonical skill source (edit here)
 content/templates/  ← spec, plan, design, constitution templates
 content/agents/     ← subagent prompt bodies (implementer, reviewers)
 skills/             ← rendered output (Claude + Cursor plugin consume this)
 agents/             ← Claude Code agent files (with frontmatter)
-packages/core/      ← @superspec-dev/core (MCP + CLI)
-packages/render/    ← @superspec-dev/render (skill renderer)
+hooks/              ← hooks.json (Claude) + hooks-cursor.json (Cursor)
+packages/core/      ← @superspec-dev/core (MCP + CLI, published to npm)
+packages/render/    ← @superspec-dev/render (skill renderer, published to npm)
 examples/           ← worked examples (url-shortener)
 ```
 
@@ -443,9 +452,12 @@ examples/           ← worked examples (url-shortener)
 
 **Publishing:**
 
-- **Skills / Cursor marketplace** → git push (`skills/` in repo)
-- **MCP/CLI tools** → `npm publish` for `@superspec-dev/core`
-- **Render CLI** → `npm publish` for `@superspec-dev/render`
+| What | How |
+|------|-----|
+| Skills (Cursor + Claude GitHub install) | `git push` — updates `skills/` in repo |
+| Claude marketplace (community) | Submit at [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit) |
+| MCP/CLI engine | `npm publish` → `@superspec-dev/core` |
+| Render CLI | `npm publish` → `@superspec-dev/render` (maintainers only) |
 
 ---
 
