@@ -9,6 +9,9 @@ export { routeModel, type ModelClass } from "./model-router.js";
 export { scaffold } from "./scaffold.js";
 export * from "./forge-loop.js";
 export { initProject, defaultTemplatesDir, type InitMode, type InitOptions, type InitResult } from "./init.js";
+export { formatInitReport, formatInitError } from "./init.js";
+export { emitInitSuccess, emitInitFailure } from "./cli-output.js";
+export { isDirectRun } from "./cli-entry.js";
 export {
   buildStatusSnapshot,
   renderStatusMarkdown,

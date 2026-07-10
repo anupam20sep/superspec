@@ -12,8 +12,9 @@ import { routeModel } from "./model-router.js";
 import { scaffold } from "./scaffold.js";
 import { initState, forgeStatus, nextTask, recordResult, loadState, saveState, markInProgress } from "./forge-loop.js";
 import { discoverPersonas } from "./persona-discovery.js";
-import { initProject } from "./init.js";
+import { initProject, formatInitReport, formatInitError } from "./init.js";
 import { buildStatusSnapshot, writeStatusFile } from "./fr-status.js";
+import { isDirectRun } from "./cli-entry.js";
 
 interface ToolContent {
   content: { type: "text"; text: string }[];
@@ -82,16 +83,31 @@ export function buildToolDefinitions(): ToolDef[] {
         mode: z.enum(["lite", "full"]),
         templatesDir: z.string().optional(),
         feature: z.string().optional(),
+        verbose: z.boolean().optional(),
       },
-      handler: async (args) =>
-        json(
-          await initProject({
+      handler: async (args) => {
+        try {
+          const result = await initProject({
             root: args.root as string,
             mode: args.mode as "lite" | "full",
             templatesDir: args.templatesDir as string | undefined,
             feature: args.feature as string | undefined,
-          }),
-        ),
+            verbose: (args.verbose as boolean | undefined) ?? true,
+          });
+          return {
+            content: [
+              {
+                type: "text",
+                text: (args.verbose as boolean | undefined) === false
+                  ? JSON.stringify(result, null, 2)
+                  : formatInitReport(result),
+              },
+            ],
+          };
+        } catch (err) {
+          return { content: [{ type: "text", text: formatInitError(err) }] };
+        }
+      },
     },
     {
       name: "sync-status",
@@ -230,6 +246,6 @@ export async function runMcpServer(): Promise<void> {
   await server.connect(transport);
 }
 
-if (process.argv[1] && process.argv[1].endsWith("mcp-server.js")) {
+if (isDirectRun(import.meta.url, process.argv[1])) {
   void runMcpServer();
 }

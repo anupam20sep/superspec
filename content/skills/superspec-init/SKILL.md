@@ -58,10 +58,12 @@ Present both options and get explicit user choice before proceeding:
 3. **Run init CLI** (preferred — bundled templates, correct layout):
 
    ```bash
-   npx @superspec-dev/core init --root . --mode lite
+   npx -y @superspec-dev/core@latest init --root . --mode lite --verbose
    ```
 
-   Or MCP `init` with `{ "root": "<repo-root>", "mode": "lite" | "full" }`.
+   Or MCP `init` with `{ "root": "<absolute-repo-root>", "mode": "lite" | "full", "verbose": true }`.
+
+   **Verify success:** stdout must show `SuperSpec init: OK` and `filesWritten` ≥ 8. If `filesWritten` is 0 or output is empty, the CLI did not run — use `--verbose` and an absolute `--root` path.
 
    Templates ship inside `@superspec-dev/core`; do **not** point at plugin `content/templates/` unless init fails and you are debugging.
 

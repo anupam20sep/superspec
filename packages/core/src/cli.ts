@@ -21,6 +21,8 @@ import {
 } from "./forge-loop.js";
 import { initProject } from "./init.js";
 import { syncStatusFromFiles } from "./fr-status.js";
+import { emitInitFailure, emitInitSuccess } from "./cli-output.js";
+import { isDirectRun } from "./cli-entry.js";
 
 export interface CliResult {
   code: number;
@@ -117,21 +119,33 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         mode: { type: "string" },
         templates: { type: "string" },
         feature: { type: "string" },
+        verbose: { type: "boolean", short: "v" },
       },
     });
     if (values.mode !== "lite" && values.mode !== "full") {
-      return { code: 0, stdout: "Error: --mode must be lite or full" };
+      return {
+        code: 0,
+        stdout: emitInitFailure(new Error("--mode is required and must be lite or full")),
+      };
     }
+    const verbose = values.verbose === true;
     try {
       const result = await initProject({
         root: values.root as string,
         mode: values.mode,
         templatesDir: values.templates as string | undefined,
         feature: values.feature as string | undefined,
+        verbose,
       });
-      return { code: 0, stdout: JSON.stringify(result, null, 2) };
+      if (result.filesWritten === 0) {
+        return {
+          code: 0,
+          stdout: emitInitFailure(new Error("init completed but wrote 0 files — check --root path")),
+        };
+      }
+      return { code: 0, stdout: emitInitSuccess(result, verbose) };
     } catch (err) {
-      return { code: 0, stdout: `Error: ${(err as Error).message}` };
+      return { code: 0, stdout: emitInitFailure(err) };
     }
   }
 
@@ -324,13 +338,14 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
 
 async function main(): Promise<void> {
   const { stdout } = await runCli(process.argv.slice(2));
-  process.stdout.write(stdout + "\n");
+  if (stdout.length > 0) {
+    process.stdout.write(stdout + "\n");
+  }
 }
 
-// Run main only when invoked directly as the CLI entry point.
-if (process.argv[1] && process.argv[1].endsWith("cli.js")) {
+if (isDirectRun(import.meta.url, process.argv[1])) {
   void main().catch((err: unknown) => {
     process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
-    process.exitCode = 0;
+    process.exitCode = 1;
   });
 }
