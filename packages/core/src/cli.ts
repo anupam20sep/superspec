@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { parseSpec } from "./spec-parser.js";
