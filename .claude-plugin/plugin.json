@@ -1,9 +1,22 @@
 {
   "name": "superspec",
   "displayName": "SuperSpec",
-  "version": "0.1.0",
-  "description": "Spec-driven + TDD-driven AI development: specify, design, plan, orchestrate, forge, validate.",
-  "author": { "name": "SuperSpec contributors" },
+  "version": "0.2.0",
+  "description": "Spec-driven + TDD-driven AI development: explore, scope, design, plan, forge, validate, and ship with traceable requirements and mandatory TDD for code tasks.",
+  "author": {
+    "name": "SuperSpec contributors"
+  },
+  "homepage": "https://github.com/anupam20sep/superspec",
+  "repository": "https://github.com/anupam20sep/superspec",
   "license": "MIT",
-  "keywords": ["sdd", "tdd", "planning", "subagents", "spec-driven"]
+  "keywords": [
+    "sdd",
+    "tdd",
+    "spec-driven",
+    "planning",
+    "subagents",
+    "forge",
+    "traceability",
+    "coverage-matrix"
+  ]
 }

@@ -1,7 +1,14 @@
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": "echo 'SuperSpec: start with /superspec.explore -> scope -> refine -> architect -> plan -> route -> forge -> validate -> ship.'" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'SuperSpec: invoke the using-superspec skill before any task — explore/ingest → scope → refine → architect → plan → route → forge → validate → ship.'"
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,8 +1,43 @@
 # Installing SuperSpec
 
-SuperSpec is a spec-driven + TDD-driven AI development plugin for Claude Code and Cursor. This document covers installation for Claude Code and Cursor today; GitHub Copilot support is planned for a future release.
+SuperSpec is a spec-driven + TDD-driven AI development plugin for Claude Code and Cursor.
 
 ## Claude Code
+
+### Install from GitHub (recommended)
+
+No clone required. The plugin ships skills, agents, hooks, and MCP from the public repo.
+
+```bash
+claude plugin marketplace add anupam20sep/superspec
+claude plugin install superspec@superspec-dev
+```
+
+In Claude Code chat:
+
+```
+/plugin marketplace add anupam20sep/superspec
+/plugin install superspec@superspec-dev
+```
+
+### MCP (bundled with the plugin)
+
+Repo-root `.mcp.json` uses npm — no local build of `packages/core` required:
+
+```json
+{
+  "mcpServers": {
+    "superspec": {
+      "command": "npx",
+      "args": ["-y", "@superspec-dev/core", "mcp"]
+    }
+  }
+}
+```
+
+On first MCP use, `npx` downloads `@superspec-dev/core` from the [npm registry](https://www.npmjs.com/package/@superspec-dev/core).
+
+### Local checkout (contributors)
 
 ```bash
 git clone https://github.com/anupam20sep/superspec.git
@@ -10,69 +45,38 @@ cd superspec
 ./scripts/install.sh
 ```
 
-`install.sh` is idempotent — safe to re-run if needed. It wraps two Claude Code CLI operations, if you'd rather run them yourself:
+`install.sh` registers the local marketplace, installs the plugin, and runs `claude plugin validate`.
+
+Manual equivalent:
 
 ```bash
-# 1. Register the local marketplace (containing the SuperSpec plugin)
 claude plugin marketplace add /path/to/superspec
-
-# 2. Install the SuperSpec plugin from the marketplace
 claude plugin install superspec@superspec-dev
+claude plugin validate /path/to/superspec
 ```
 
-Both commands are safe to re-run. If the marketplace or plugin is already registered/installed, they will update it in place or report that no further action is needed.
+### MCP in a different project (without the full plugin)
 
-### Note on the plugin's own `.mcp.json` vs. using SuperSpec's tools in another project
-
-The `.mcp.json` committed at the root of this repository (used by the SuperSpec plugin's own skills/MCP wiring) references `${CLAUDE_PLUGIN_ROOT}`, a variable Claude Code resolves automatically once the plugin is installed. That file is correct as-is and does not need to change.
-
-`${CLAUDE_PLUGIN_ROOT}` only has meaning inside an actual installed plugin's own manifest, though — it can't be used to reach SuperSpec's MCP tools from some other, unrelated project's own `.mcp.json`. For that different scenario — wanting SuperSpec's tools available in a project that isn't the SuperSpec plugin itself — the mechanism is the same npx-based one described under [Cursor](#cursor) below: that other project's own `.mcp.json` can add
-
-```json
-{
-  "mcpServers": {
-    "superspec": { "command": "npx", "args": ["-y", "@superspec-dev/core", "mcp"] }
-  }
-}
-```
-
-which resolves via the npm registry rather than any path into this repository or a plugin cache.
+Add the same `npx` entry to that project's own `.mcp.json` if you only want tools, not skills.
 
 ## Cursor
-
-In Cursor's Agent chat:
 
 ```
 /add-plugin superspec
 ```
 
-This installs the full lifecycle — skills, rules, hooks — from the `.cursor-plugin/plugin.json` manifest this repo ships. If it isn't showing up in Cursor's marketplace search yet, add it directly by URL instead (Team Marketplace import, or `/add-plugin https://github.com/anupam20sep/superspec`).
+Or by URL: `/add-plugin https://github.com/anupam20sep/superspec`
 
-Developing SuperSpec itself is even simpler: no install step at all — Cursor auto-discovers `.cursor/skills/`, `.cursor/rules/*.mdc`, and `.cursor/mcp.json` the moment you open this repository as a workspace folder.
+Skills ship from `./skills/` per `.cursor-plugin/plugin.json`. Optional MCP: add `npx @superspec-dev/core mcp` to your project's `.cursor/mcp.json` (see main README).
 
-### Using SuperSpec's MCP tools in a different project (npm-only path)
+## Community marketplace submission
 
-Separately from the plugin install above: any project can get SuperSpec's MCP tools (`build-matrix`, `lint-plan`, `route-model`, `scaffold`, `forge-status`, `list-personas`) on their own, without installing the full plugin, by adding an entry to that project's own `.cursor/mcp.json`:
+To list in Anthropic's public `claude-community` catalog after review, submit at:
 
-```json
-{
-  "mcpServers": {
-    "superspec": { "command": "npx", "args": ["-y", "@superspec-dev/core", "mcp"] }
-  }
-}
-```
+- https://platform.claude.com/plugins/submit
 
-This works regardless of where that project lives on disk, because `npx` resolves `@superspec-dev/core` from the npm registry (or a local npm cache) rather than requiring a filesystem path into wherever this SuperSpec repository happens to be checked out. That's the key difference from the `.cursor/mcp.json` in *this* repository (shown above), which uses `${workspaceFolder}` and therefore only makes sense when the workspace folder is this repository itself.
+Run `claude plugin validate` on the repo before submitting.
 
-## Adding GitHub Copilot (future)
+## GitHub Copilot (future)
 
-GitHub Copilot support is planned as a future release. When added, Copilot will require **no install script**, just like Cursor's file-based approach above.
-
-Copilot's "installation" will be handled entirely through the presence of:
-
-- `.github/prompts/*.prompt.md` — Copilot prompts
-- `.vscode/mcp.json` — MCP server configuration
-
-This matches Cursor's file-based pattern and requires no marketplace registration, build step, or additional commands — the files themselves will act as the installation mechanism.
-
-This section documents planned behavior only. These files do not yet exist in the repository.
+Planned: `.github/prompts/*.prompt.md` + `.vscode/mcp.json` — no install script.
