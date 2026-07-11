@@ -45,11 +45,13 @@ You should get `specs/<feature>/spec.md` with `FR-###` requirements.
 
 ---
 
-## 4. Plan and route
+## 4. Plan (includes route)
 
-> Write a TDD plan with superspec-plan, then route with superspec-route.
+> Write a TDD plan with superspec-plan.
 
-Artifacts: `plan.md`, optionally `execution-map.md`.
+`superspec-plan` saves `plan.md`, then **automatically** chains `superspec-route` to produce `execution-map.md`. Both files must exist before forge.
+
+Artifacts: `plan.md`, `execution-map.md`.
 
 ---
 

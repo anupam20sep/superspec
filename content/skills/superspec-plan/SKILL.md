@@ -15,10 +15,14 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Announce at start:** "I'm using the superspec-plan skill to create the implementation plan."
 
-**Context:** If working in an isolated worktree, it should have been created via the `using-superspec` skill at execution time.
+**Context:** If working in an isolated worktree, invoke `superspec-worktree` before plan (see `using-superspec` worktree guidance).
 
 **Save plans to:** `specs/{{FEATURE}}/plan.md`
 - (User preferences for plan location override this default)
+
+**Plan phase outputs two files** — the plan phase is not complete until both exist:
+1. `specs/{{FEATURE}}/plan.md` — tasks, dependencies, TDD steps (this skill)
+2. `specs/{{FEATURE}}/execution-map.md` — parallel windows, model routing, gates (**REQUIRED SUB-SKILL:** `superspec-route`, see Route step below)
 
 ## Scope Check
 
@@ -158,22 +162,41 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
+## Route (required — do not skip)
+
+After `plan.md` is saved and self-review passes, **immediately** invoke **superspec-route** in the same session. Do not offer forge execution or end the plan phase until `execution-map.md` exists beside `plan.md`.
+
+**Announce:** "Plan saved — now using superspec-route to build the execution map."
+
+**REQUIRED SUB-SKILL:** `superspec-route` writes `specs/{{FEATURE}}/execution-map.md` with:
+- Dependency DAG from plan task `**Depends on:**` lines
+- Parallel windows (no shared writes within a window)
+- Model routing per task complexity (`complex` → strong; `mechanical`/`moderate` → fast)
+- Personas via `list-personas` (or `@fallback` roles)
+- Verification gates and rollback per window
+
+Run `lint-plan` on `plan.md` before routing if MCP/CLI is available. After routing, confirm both artifacts exist on disk.
+
+**Single-task plans:** still produce a one-window execution map (W1) — forge and validate expect `execution-map.md` even when nothing parallelizes.
+
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+Follow execution mode from `using-superspec` (Review vs Autonomous).
 
-**"Plan complete and saved to `specs/{{FEATURE}}/plan.md`. Two execution options:**
+After **both** `plan.md` and `execution-map.md` are saved:
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task via superspec-forge, review between tasks, fast iteration
+**Review mode (default):** Present both artifacts and wait for plan approval before forge.
 
-**2. Inline Execution** - Execute tasks in this session using superspec-forge, batch execution with checkpoints
+> "Plan phase complete — `specs/{{FEATURE}}/plan.md` and `execution-map.md`. Review tasks, dependencies, and parallel windows. When ready, choose forge approach: (1) Subagent-Driven or (2) Inline Execution."
 
-**Which approach?"**
+Wait for user approval and forge-mode choice. Then invoke **`superspec-forge`** in the chosen mode.
 
-**If Subagent-Driven chosen:**
+**Autonomous mode:** invoke **`superspec-forge`** immediately in subagent-driven mode (no wait, no forge-mode question). If the user previously specified inline execution, honor that; otherwise default to subagent-driven.
+
+**If Subagent-Driven:**
 - **REQUIRED SUB-SKILL:** Use superspec-forge in subagent mode
 - Fresh subagent per task + two-stage review
 
-**If Inline Execution chosen:**
+**If Inline Execution:**
 - **REQUIRED SUB-SKILL:** Use superspec-forge in inline execution mode
 - Batch execution with checkpoints for review

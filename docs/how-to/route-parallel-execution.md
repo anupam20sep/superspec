@@ -4,7 +4,7 @@
 
 ## When
 
-After `plan.md` exists with multiple tasks and dependencies. Use **superspec-route**.
+After `plan.md` exists. **superspec-plan** chains **superspec-route** automatically — you should always get `execution-map.md` in the same session as the plan. Invoke `superspec-route` manually only when re-routing after plan edits.
 
 ---
 

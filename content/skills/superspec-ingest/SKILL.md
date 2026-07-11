@@ -170,11 +170,19 @@ Before handoff, confirm:
 
 ## Handoff
 
+Follow execution mode from `using-superspec` (Review vs Autonomous).
+
 After ingest is complete:
 
 - **Next stage: `superspec-scope`** — formalize `ingest-draft.md` into a numbered `spec.md` with SC-###, user stories, and acceptance scenarios; preserve provenance references where useful
 - **If source conflicts block scoping:** resolve via human review or `superspec-refine` after scope
 - **If no feature directory exists yet:** create `specs/<FEATURE>/` during ingest; scope will refine naming and numbering
+
+**Review mode (default):** Present the ingest draft and `sources.lock`. Wait for approval before scope.
+
+> "Ingest complete. Review the draft FRs and provenance. Reply when ready to formalize into `spec.md`."
+
+**Autonomous mode:** invoke `superspec-scope` immediately.
 
 ## Key Principles
 

@@ -117,10 +117,18 @@ Each story is a user journey:
 
 ## Handoff
 
+Follow execution mode from `using-superspec` (Review vs Autonomous).
+
 After your specification is validated and complete:
 
-- **Next stage: `superspec-refine`** — Deep-dive into requirements, resolve any remaining [NEEDS CLARIFICATION] markers, and lock in answers before design
-- **Or next stage: `superspec-architect`** — If your spec is already clear and well-defined, jump directly to designing the solution architecture
+- **If `spec.md` contains `[NEEDS CLARIFICATION]` markers** → next: `superspec-refine`
+- **If spec is clear** → next: `superspec-architect`
+
+**Review mode (default):** Present `specs/<feature>/spec.md` and wait for explicit approval — additions, priority changes, FR edits — before invoking the next skill.
+
+> "Spec saved to `specs/<feature>/spec.md`. Review FRs, stories, and success criteria. Reply when ready to continue to design (or refinement if clarifications remain)."
+
+**Autonomous mode:** invoke the next skill immediately — `superspec-refine` if clarification markers exist, otherwise `superspec-architect`.
 
 ## Key Principles
 

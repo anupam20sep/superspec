@@ -9,7 +9,7 @@
 - Plugin installed (Claude Code or Cursor)
 - `superspec-init` completed in your repo
 - `specs/<feature>/spec.md` and `plan.md` written (`scope` → `plan`)
-- Optional: `execution-map.md` from `route` for parallel windows and model routing
+- `execution-map.md` from the plan phase (`superspec-plan` → `superspec-route`) for parallel windows and model routing
 
 Set `FEATURE` and `DIR` for your spec folder:
 

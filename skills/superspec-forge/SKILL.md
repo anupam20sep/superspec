@@ -165,9 +165,18 @@ The reviewer returns **two independent verdicts** in one report (adapted from Su
 
 ## Per-Task Dispatch Playbook (Claude Code & Cursor)
 
-The forge coordinator runs this loop per task. Steps 1–2 and 7–8 are identical on both platforms (CLI/MCP). Steps 3–6 differ only in **how** you spawn implementer and reviewer.
+The forge coordinator runs this loop per task. **Before the loop**, run forge start (once). Steps 0–9 below are per-session; steps 1–9 repeat per task.
 
-### Shared steps (every platform)
+### Forge start (once, before first task)
+
+```text
+0. sync-status --verbose   → write specs/<feature>/status.md from spec + plan + state
+   npx @superspec-dev/core sync-status --spec specs/<feature>/spec.md --plan specs/<feature>/plan.md --dir specs/<feature> --verbose
+```
+
+Call step 0 at forge kickoff (after plan-phase approval in review mode, or immediately in autonomous mode). TodoWrite todos from the plan should also be created here.
+
+### Shared steps (every platform, per task)
 
 ```text
 1. route-model          → pick fast/strong for implementer AND reviewer
@@ -178,6 +187,7 @@ The forge coordinator runs this loop per task. Steps 1–2 and 7–8 are identic
 6. If review fails → resume implementer with findings → back to 5
 7. record-result --passed true --spec specs/<feature>/spec.md --verbose
 8. sync-status --verbose (or forge-status --spec …)
+9. forge-status --dir specs/<feature> --verbose → check complete
 ```
 
 Implementer prompt body: **`agents/implementer.md`**. Reviewer prompt body: **`agents/task-reviewer.md`**. Layer a discovered persona on the implementer only (see "Dispatching With a Discovered Persona" above).
@@ -336,7 +346,15 @@ After compaction or restart, trust `status.md`, `state.json`, and `git log` — 
 
 **Upstream:** superspec-route produces the execution map (or superspec-plan produces the task plan) this skill executes.
 
-**Downstream:** once `forge-status` reports `complete: true`, hand off to superspec-validate to confirm coverage-matrix status and run final gates.
+**Downstream:** when `forge-status` reports `complete: true`, follow execution mode from `using-superspec`:
+
+**Review mode (default):** Present implementation summary + `status.md`. Wait for approval before validation.
+
+> "Forge complete — all tasks done. Review `status.md` and the diff. Reply when ready to run validation."
+
+Then invoke **`superspec-validate`**.
+
+**Autonomous mode:** invoke **`superspec-validate`** immediately when `complete: true`.
 
 ---
 

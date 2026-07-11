@@ -23,9 +23,11 @@ Use superspec-route when:
 - You need rollback strategies per execution window
 
 Don't use when:
-- The plan is a single task (no parallelization possible)
+- `execution-map.md` already exists for this feature and plan hasn't changed (re-route only after plan edits)
 - Dependencies are unclear (resolve in superspec-plan first)
 - Complexity levels haven't been assigned to tasks (resolve in superspec-plan first)
+
+**Note:** `superspec-plan` chains here automatically after every plan. Single-task plans still get a one-window map (W1) with gates and rollback — parallelization is optional, the artifact is not.
 
 ## The Pattern
 
@@ -178,7 +180,6 @@ All tables must be properly markdown-formatted. All references to tasks use T###
 
 ## When NOT to Use
 
-- **Single task:** No parallelization possible; use superspec-plan output directly
 - **Unclear dependencies:** Clarify in superspec-plan before routing
 - **Unclassified complexity:** Assign complexity levels in superspec-plan first
 - **No personas defined:** Assign roles in superspec-scope or superspec-refine
@@ -227,6 +228,8 @@ Before handing off to superspec-forge:
 5. **Personas are assigned:** Every window has a primary persona
 6. **Gates are testable:** Every gate has measurable criteria (not "looks good")
 7. **Rollback is complete:** Every window has a concrete rollback procedure
+
+**Handoff:** `superspec-route` is invoked by `superspec-plan` (not a separate user-facing phase). When `execution-map.md` is saved, control returns to `superspec-plan` for the forge handoff (review or autonomous per `using-superspec`).
 
 ---
 

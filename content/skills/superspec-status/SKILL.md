@@ -106,10 +106,21 @@ When `program.md` exists, prefer its **Stage** column if recently updated; cross
 
 ## forge-status Integration
 
-For specs at `forge` stage, call the MCP tool:
+For specs at `forge` stage, call the MCP tool **with persisted state**:
 
 ```
-forge-status({ plan: <contents of specs/<FEATURE>/plan.md> })
+forge-status({
+  plan: <contents of specs/<FEATURE>/plan.md>,
+  stateDir: "specs/<FEATURE>",
+  specText: <contents of specs/<FEATURE>/spec.md>,  // optional; refreshes status.md
+  specDir: "specs/<FEATURE>"
+})
+```
+
+CLI equivalent (always pass `--dir`):
+
+```bash
+npx @superspec-dev/core forge-status --plan specs/<FEATURE>/plan.md --dir specs/<FEATURE> --spec specs/<FEATURE>/spec.md --verbose
 ```
 
 Record the response:
@@ -124,7 +135,9 @@ Record the response:
 
 Display forge column as `done/total` (e.g., `3/8`). If `complete: true`, stage inference should advance to `validate` — flag if program.md still says `forge`.
 
-**Note:** As documented in `superspec-forge`, the MCP `forge-status` tool evaluates plan text fresh; it does not load persisted forge state from disk. For cross-session forge progress, also check `.superspec/state.json` if present.
+**Always pass `stateDir` / `--dir`.** Without it, forge-status uses fresh state and shows `0/N` done.
+
+For cross-session forge progress, `.superspec/state.json` under the spec directory is the machine source of truth; `status.md` is the human-readable committed view.
 
 ## Lite vs Full Mode
 

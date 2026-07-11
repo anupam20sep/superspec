@@ -37,7 +37,7 @@ Do NOT scaffold tier templates into `docs/`, a user-provided resources path, or 
 | `.superspec/templates/` | Reference copies of tier templates (not live specs) |
 | `program.md` | Full mode only — multi-spec backlog at repo root |
 
-Per-feature artifacts (`spec.md`, `plan.md`, `status.md`) are created later under `specs/<feature>/` by scope/plan/forge — **not** during init.
+Per-feature artifacts (`spec.md`, `plan.md`, `execution-map.md`, `status.md`) are created later under `specs/<feature>/` by scope/plan/forge — **not** during init. The plan phase produces both `plan.md` and `execution-map.md`.
 
 ## Lite vs Full Mode
 

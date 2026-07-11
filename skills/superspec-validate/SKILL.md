@@ -211,6 +211,16 @@ If any gate is unsigned or failing: **STOP and document the gap.**
 → superspec-ship: Validation is clean. Proceed to decide how to integrate this work (merge, PR, keep, or discard).
 ```
 
+**Handoff (follow execution mode from `using-superspec`):**
+
+**Review mode (default):** Present the validation report and wait before ship.
+
+> "Validation clean — see report above. Ready to integrate (merge / PR / keep / discard)?"
+
+Then invoke **`superspec-ship`**.
+
+**Autonomous mode:** invoke **`superspec-ship`** immediately when validation passes.
+
 **If verification fails:**
 
 ```

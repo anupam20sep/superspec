@@ -242,12 +242,20 @@ Before finalizing `design.md`:
 
 ## Next step
 
-Once `design.md` is complete and approved:
+Follow execution mode from `using-superspec` (Review vs Autonomous).
+
+Once `design.md` is complete:
 
 1. **Review for decisions**: Ensure all ADRs are clear and decisions are justified.
-2. **Invoke `superspec-plan`**: Hand off to the task-breakdown stage to decompose the design into implementation tasks.
+2. **Next:** `superspec-plan` → `plan.md` + `execution-map.md` (plan chains route automatically).
 
-The `superspec-plan` skill will read `design.md` and create `specs/{{FEATURE}}/plan.md`, breaking down the architecture into TDD-driven implementation tasks.
+**Review mode (default):** Present `design.md` and wait for explicit design sign-off before planning.
+
+> "`design.md` saved. Review architecture, decisions, and contracts. Reply when ready for the implementation plan."
+
+**Autonomous mode:** invoke `superspec-plan` immediately (which chains `superspec-route` before any forge handoff).
+
+The `superspec-plan` skill reads `design.md` and creates `specs/{{FEATURE}}/plan.md`, breaking down the architecture into TDD-driven implementation tasks.
 
 ---
 

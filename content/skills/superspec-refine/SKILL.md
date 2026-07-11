@@ -153,10 +153,18 @@ Format: Short answer (≤5 words). Reply "yes" or "suggested", or provide your o
 
 ## Next Steps
 
+Follow execution mode from `using-superspec` (Review vs Autonomous).
+
 Once clarifications are complete:
 1. Review the updated spec and `## Clarifications` section
 2. Commit the clarified spec: `git add specs/<feature>/spec.md && git commit -m "clarify: <feature> specification"`
-3. Proceed to `superspec-architect` to create the design document (`design.md`) with architecture, data models, API contracts, and technical decisions
+3. **Next:** `superspec-architect` → `design.md`
+
+**Review mode (default):** Present the updated spec and wait for approval before architect.
+
+> "Clarifications integrated into `spec.md`. Review the changes, then I'll write `design.md`."
+
+**Autonomous mode:** invoke `superspec-architect` immediately.
 
 ## Tips for Effective Clarification
 
@@ -168,7 +176,9 @@ Once clarifications are complete:
 ## When to Skip or Defer
 
 If the specification is already clear and contains no `[NEEDS CLARIFICATION]` markers:
-- The skill will report "No critical ambiguities detected" and suggest proceeding directly to `superspec-architect`
+- Report "No critical ambiguities detected"
+- **Review mode:** suggest proceeding to `superspec-architect` after user confirms
+- **Autonomous mode:** invoke `superspec-architect` immediately
 
 If you reach the 5-question limit with unresolved high-impact categories:
 - The skill will flag these as "Deferred" and recommend whether to proceed to architecture (and accept future design rework) or run another clarification round after planning

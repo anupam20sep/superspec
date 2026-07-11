@@ -29,7 +29,7 @@ You MUST create a task for each of these items and complete them in order:
 6. **Write design doc** — save to `docs/superspec/specs/YYYY-MM-DD-<topic>-design.md` and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke superspec-plan skill to create implementation plan
+9. **Transition to formal spec** — invoke superspec-scope to produce `specs/<feature>/spec.md` (see Handoff)
 
 ## Process Flow
 
@@ -43,7 +43,7 @@ digraph brainstorming {
     "Write design doc" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
-    "Invoke superspec-plan skill" [shape=doublecircle];
+    "Invoke superspec-scope skill" [shape=doublecircle];
 
     "Explore project context" -> "Ask clarifying questions";
     "Ask clarifying questions" -> "Propose 2-3 approaches";
@@ -54,11 +54,11 @@ digraph brainstorming {
     "Write design doc" -> "Spec self-review\n(fix inline)";
     "Spec self-review\n(fix inline)" -> "User reviews spec?";
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke superspec-plan skill" [label="approved"];
+    "User reviews spec?" -> "Invoke superspec-scope skill" [label="approved"];
 }
 ```
 
-**The terminal state is invoking superspec-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after this stage is superspec-plan.
+**The terminal state is invoking superspec-scope.** Do NOT jump to `superspec-plan` or `superspec-forge` from explore. Formal `spec.md`, `design.md`, and `plan.md` live under `specs/<feature>/` and are produced by later lifecycle skills.
 
 ## The Process
 
@@ -118,17 +118,17 @@ After writing the spec document, look at it with fresh eyes:
 
 Fix any issues inline. No need to re-review — just fix and move on.
 
-**User Review Gate:**
-After the spec review loop passes, ask the user to review the written spec before proceeding:
+**Handoff (follow execution mode from `using-superspec`):**
 
-> "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
+**Review mode (default):** After the spec review loop passes, ask the user to review the brainstorm document:
 
-Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
+> "Design doc written to `<path>`. Please review it — additions, scope cuts, or priority changes — before I formalize it into `specs/<feature>/spec.md`."
 
-**Implementation:**
+Wait for approval. Then invoke **`superspec-scope`** with the design doc as input.
 
-- Invoke the superspec-plan skill to create a detailed implementation plan
-- Do NOT invoke any other skill. superspec-plan is the next step.
+**Autonomous mode:** invoke **`superspec-scope`** immediately — no wait. Scope reads the explore output and writes numbered `spec.md` under `specs/<feature>/`.
+
+Do **not** invoke `superspec-plan`, `superspec-architect`, or `superspec-forge` from explore.
 
 ## Key Principles
 
