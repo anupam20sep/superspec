@@ -13,11 +13,10 @@ export { formatInitReport, formatInitError } from "./init.js";
 export { emitInitSuccess, emitInitFailure } from "./cli-output.js";
 export { isDirectRun } from "./cli-entry.js";
 export {
-  buildStatusSnapshot,
-  renderStatusMarkdown,
-  writeStatusFile,
-  syncStatusFromFiles,
-  statusFilePath,
-  type FrStatus,
-  type StatusSnapshot,
-} from "./fr-status.js";
+  discoverPersonas,
+  findProjectRoot,
+  defaultPersonaDirs,
+  type Persona,
+  type PersonaSource,
+  type DiscoverPersonasOptions,
+} from "./persona-discovery.js";

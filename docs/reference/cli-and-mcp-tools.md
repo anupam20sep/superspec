@@ -52,7 +52,7 @@ All forge commands need `stateDir` / `--dir specs/<feature>`.
 
 | MCP | CLI | Purpose |
 |-----|-----|---------|
-| `list-personas` | `list-personas` | Scan `.claude/agents/` and `.cursor/agents/` |
+| `list-personas` | `list-personas` | Scan project + home `.claude/.cursor/.codex/agents` (pass `projectRoot` / `--root`) |
 
 ---
 

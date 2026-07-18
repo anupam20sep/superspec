@@ -81,7 +81,24 @@ Assign model routing to each task individually, then summarize by window (all ta
 
 ### 4. Assign Personas
 
-Before assigning any persona to a window, call the `list-personas` discovery tool. It scans the project's specialized agent definitions — any custom agent files defined for the project — and returns each one's name and description.
+Before assigning any persona to a window, call the `list-personas` discovery tool.
+
+**Preferred call** (works when MCP cwd ≠ project root):
+
+```text
+list-personas({ projectRoot: "<absolute path to repo root>" })
+```
+
+By default the tool scans (recursively for markdown):
+
+| Location | Format |
+|----------|--------|
+| `<projectRoot>/.claude/agents/` | markdown |
+| `<projectRoot>/.cursor/agents/` | markdown |
+| `<projectRoot>/.codex/agents/` | markdown + TOML |
+| `~/.claude/agents/`, `~/.cursor/agents/`, `~/.codex/agents/` | same |
+
+Optional overrides: `claudeAgentsDir`, `cursorAgentsDir`, `codexAgentsDir` (relative paths resolve against `projectRoot`). It returns each persona's name, description, source, and path.
 
 **If discovery returns one or more personas:** match each window's dominant task type against the discovered personas' descriptions, and assign the closest fit as that window's primary persona, using the persona's real name exactly as discovered (not an invented `@`-prefixed label). This matching is a judgment call, not a deterministic algorithm — there's no formula for it, so weigh what each window's tasks actually require against what each discovered persona's description says it owns or reviews. Secondary (reviewer) personas can be assigned the same way, from the remaining discovered personas. If no discovered persona is a good fit for a particular window, it's fine to say so and fall back to the generic list below for just that window — fallback can be applied per-window, not only all-or-nothing across the whole plan.
 

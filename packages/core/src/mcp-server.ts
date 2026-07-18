@@ -302,13 +302,24 @@ export function buildToolDefinitions(): ToolDef[] {
     {
       name: "list-personas",
       description:
-        "List specialized sub-agent personas discovered in the target project's .claude/agents and .cursor/agents directories.",
-      schema: { claudeAgentsDir: z.string().optional(), cursorAgentsDir: z.string().optional() },
+        "List specialized sub-agent personas from project and user agent directories. Defaults to <projectRoot>/{.claude,.cursor,.codex}/agents and ~/.{claude,cursor,codex}/agents (markdown; Codex also TOML). Pass projectRoot when the MCP cwd is not the repo root; optional claudeAgentsDir/cursorAgentsDir/codexAgentsDir override or extend discovery.",
+      schema: {
+        projectRoot: z.string().optional(),
+        claudeAgentsDir: z.string().optional(),
+        cursorAgentsDir: z.string().optional(),
+        codexAgentsDir: z.string().optional(),
+        includeDefaults: z.boolean().optional(),
+        includeHome: z.boolean().optional(),
+      },
       handler: async (args) =>
         json(
           await discoverPersonas({
+            projectRoot: args.projectRoot as string | undefined,
             claude: args.claudeAgentsDir as string | undefined,
             cursor: args.cursorAgentsDir as string | undefined,
+            codex: args.codexAgentsDir as string | undefined,
+            includeDefaults: args.includeDefaults as boolean | undefined,
+            includeHome: args.includeHome as boolean | undefined,
           }),
         ),
     },

@@ -147,7 +147,11 @@ describe("list-personas MCP tool", () => {
     );
 
     const tool = buildToolDefinitions().find((t) => t.name === "list-personas")!;
-    const res = await tool.handler({ claudeAgentsDir: claudeDir, cursorAgentsDir: cursorDir });
+    const res = await tool.handler({
+      claudeAgentsDir: claudeDir,
+      cursorAgentsDir: cursorDir,
+      includeDefaults: false,
+    });
     const payload = JSON.parse(res.content[0].text);
 
     expect(payload).toHaveLength(2);
@@ -157,9 +161,24 @@ describe("list-personas MCP tool", () => {
     ]);
   });
 
-  it("returns [] when called with no args", async () => {
+  it("defaults to projectRoot agent dirs without explicit paths", async () => {
+    await mkdir(join(root, ".claude", "agents"), { recursive: true });
+    await writeFile(
+      join(root, ".claude", "agents", "backend.md"),
+      "---\nname: backend\ndescription: API.\n---\n\nBody",
+      "utf8",
+    );
+
     const tool = buildToolDefinitions().find((t) => t.name === "list-personas")!;
-    const res = await tool.handler({});
+    const res = await tool.handler({ projectRoot: root, includeHome: false });
+    const payload = JSON.parse(res.content[0].text);
+
+    expect(payload.some((p: { name: string }) => p.name === "backend")).toBe(true);
+  });
+
+  it("returns [] when defaults are disabled and no dirs passed", async () => {
+    const tool = buildToolDefinitions().find((t) => t.name === "list-personas")!;
+    const res = await tool.handler({ includeDefaults: false });
     expect(JSON.parse(res.content[0].text)).toEqual([]);
   });
 });

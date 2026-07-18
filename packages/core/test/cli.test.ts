@@ -240,9 +240,29 @@ describe("runCli list-personas", () => {
     expect(personas[0].name).toBe("backend-developer");
   });
 
-  it("returns [] when no flags are given at all", async () => {
-    const { code, stdout } = await runCli(["list-personas"]);
+  it("returns [] when defaults are disabled", async () => {
+    const { code, stdout } = await runCli(["list-personas", "--no-defaults"]);
     expect(code).toBe(0);
     expect(JSON.parse(stdout)).toEqual([]);
+  });
+
+  it("discovers project agents via --root", async () => {
+    const dir = join(root, ".claude", "agents");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "backend-developer.md"),
+      "---\nname: backend-developer\ndescription: Server-side work.\n---\n\nBody\n",
+      "utf8",
+    );
+
+    const { code, stdout } = await runCli([
+      "list-personas",
+      "--root",
+      root,
+      "--no-home",
+    ]);
+    expect(code).toBe(0);
+    const personas = JSON.parse(stdout);
+    expect(personas.some((p: { name: string }) => p.name === "backend-developer")).toBe(true);
   });
 });

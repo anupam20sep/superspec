@@ -391,12 +391,23 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
   if (command === "list-personas") {
     const { values } = parseArgs({
       args: rest,
-      options: { "claude-agents-dir": { type: "string" }, "cursor-agents-dir": { type: "string" } },
+      options: {
+        root: { type: "string" },
+        "claude-agents-dir": { type: "string" },
+        "cursor-agents-dir": { type: "string" },
+        "codex-agents-dir": { type: "string" },
+        "no-defaults": { type: "boolean" },
+        "no-home": { type: "boolean" },
+      },
     });
     try {
       const personas = await discoverPersonas({
+        projectRoot: values.root as string | undefined,
         claude: values["claude-agents-dir"] as string | undefined,
         cursor: values["cursor-agents-dir"] as string | undefined,
+        codex: values["codex-agents-dir"] as string | undefined,
+        includeDefaults: values["no-defaults"] === true ? false : undefined,
+        includeHome: values["no-home"] === true ? false : undefined,
       });
       return { code: 0, stdout: JSON.stringify(personas, null, 2) };
     } catch (err) {

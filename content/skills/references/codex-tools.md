@@ -80,11 +80,13 @@ Or ask in natural language; Codex loads matching skills by description.
 
 ## Personas on Codex
 
-`list-personas` currently discovers `.claude/agents/` and `.cursor/agents/` markdown agents only — not `.codex/agents/*.toml`. On Codex:
+`list-personas` scans project + home `.claude/agents`, `.cursor/agents`, and `.codex/agents` (markdown + TOML). Prefer:
 
-- Prefer `@fallback` roles from `superspec-route`, or
-- Paste a discovered markdown persona description into the implementer prompt, or
-- Manually fold a project's Claude/Cursor agent file into the spawn prompt.
+```text
+list-personas({ projectRoot: "<absolute repo root>" })
+```
+
+On Codex you can still use `@fallback` roles from `superspec-route`, or paste a discovered persona description into the implementer prompt.
 
 ## Limitations and Fallbacks
 

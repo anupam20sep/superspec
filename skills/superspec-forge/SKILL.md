@@ -274,7 +274,7 @@ Task({
 
 **Fix loop:** `Task({ resume: "<implementer-agent-id>", prompt: "Fix these review findings: …" })` then re-run the reviewer `Task` with a fresh dispatch.
 
-**Personas:** `list-personas` scans `.cursor/agents/` and `.claude/agents/`. Use discovered names in `subagent_type` when the platform exposes them; otherwise paste persona description into the implementer prompt.
+**Personas:** `list-personas` scans `.claude/agents`, `.cursor/agents`, and `.codex/agents` (project + home). Pass `projectRoot` when MCP cwd is not the repo. Use discovered names when the platform exposes them; otherwise paste persona description into the implementer prompt.
 
 ### Codex
 
@@ -313,7 +313,7 @@ spawn({
 
 **Fix loop:** resume the **same** implementer spawn/thread with reviewer findings; re-spawn the reviewer fresh after each fix. Do not call `next-task` while review is open.
 
-**Personas:** `list-personas` does not yet scan `.codex/agents/*.toml`. On Codex use `@fallback` roles from the execution map, or paste a markdown persona description into the implementer prompt.
+**Personas:** `list-personas` scans `.claude/agents`, `.cursor/agents`, and `.codex/agents` (project + home; Codex supports TOML). Pass `projectRoot` when MCP cwd is not the repo. Use discovered names, `@fallback` roles, or paste a persona description into the implementer prompt.
 
 ### Inline fallback (any platform)
 

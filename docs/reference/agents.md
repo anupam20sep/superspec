@@ -8,7 +8,7 @@ Shipped in plugin `agents/` (Claude Code) and `content/agents/` (source).
 | `task-reviewer.md` | After each task | Spec compliance + code quality |
 | `spec-reviewer.md` | Before plan (optional) | Spec quality, testable FRs |
 
-Copy to `.claude/agents/` or `.cursor/agents/` for discovery via `list-personas`.
+Copy to `.claude/agents/`, `.cursor/agents/`, or `.codex/agents/` for discovery via `list-personas` (also scans user-home equivalents).
 
 Fill bracket placeholders (`[TASK_NAME]`, `[ACCEPTANCE_CRITERIA]`, etc.) before dispatch.
 
