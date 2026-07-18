@@ -59,12 +59,12 @@ Pass when: agent announces using-superspec (or an entry skill) before implementa
 
 ### 3. MCP
 
-Plugin bundles `.mcp.json` → `npx -y @superspec-dev/core mcp`.
+Plugin bundles `.mcp.json` → `npx -y @superspec-dev/core@0.2.5 mcp`.
 
 Manual fallback:
 
 ```bash
-codex mcp add superspec -- npx -y @superspec-dev/core mcp
+codex mcp add superspec -- npx -y @superspec-dev/core@0.2.5 mcp
 ```
 
 Call one tool, e.g. lint the worked example plan:
