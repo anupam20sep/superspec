@@ -100,10 +100,22 @@ In Claude Code chat:
 
 ```bash
 codex plugin marketplace add anupam20sep/superspec
-# or local: codex plugin marketplace add /path/to/SuperSpec
+# or local clone:
+codex plugin marketplace add /path/to/SuperSpec
+
+codex plugin add superspec@superspec-dev
 ```
 
-Then install from `/plugins`, or open ChatGPT **Work mode** / desktop Codex → Plugins Directory → **SuperSpec**. After install, approve SessionStart hooks in `/hooks` (Codex skips untrusted plugin hooks). MCP is bundled via `.codex-plugin` → `.mcp.json`.
+Or open ChatGPT **Work mode** / desktop Codex → Plugins Directory → **SuperSpec**. After install, approve SessionStart hooks in `/hooks` (Codex skips untrusted plugin hooks). MCP is bundled via `.codex-plugin` → `.mcp.json`.
+
+Requires Codex CLI **≥ 0.142** (repo-root plugin path `./`). If you added the marketplace earlier and saw no plugins, remove and re-add it after pulling this fix:
+
+```bash
+codex plugin marketplace remove superspec-dev
+codex plugin marketplace add anupam20sep/superspec   # or local path
+codex plugin list --available -m superspec-dev
+codex plugin add superspec@superspec-dev
+```
 
 Restart the session (or `/reload-plugins` on Claude) after install. [Install details →](docs/how-to/install-on-your-runtime.md)
 
@@ -518,18 +530,27 @@ Skills ship from `./skills/` (same layout as [obra/superpowers](https://github.c
 ```bash
 codex plugin marketplace add anupam20sep/superspec
 # or local: codex plugin marketplace add /path/to/SuperSpec
-# Then install via /plugins or `codex plugin` when your CLI build exposes it
+codex plugin add superspec@superspec-dev
 ```
 
 ChatGPT **Work mode** / desktop Codex: Plugins Directory → install **SuperSpec**.
 
 Includes:
 
-- Skills from `./skills/` (`.codex-plugin/plugin.json`)
+- Skills from `./skills/` (`.codex-plugin/plugin.json` at repo root)
 - MCP via the same `.mcp.json` (`npx @superspec-dev/core mcp`)
 - SessionStart hooks (`hooks/hooks-codex.json`) — **approve in `/hooks`** after install
 
-If Claude-compat (`.claude-plugin/marketplace.json`) and Codex (`.agents/plugins`) both list SuperSpec, install **once** from the Codex source. Some Codex CLI builds gate the `plugins` feature — use Work mode, or fall back to `.agents/skills/` + `codex mcp add superspec -- npx -y @superspec-dev/core mcp`.
+Marketplace entry uses `"path": "./"` (repo root). That requires Codex CLI **≥ 0.142**. Older snapshots used `"../.."`, which Codex silently skips — if the marketplace appears but no plugin lists, remove and re-add after upgrading/pulling:
+
+```bash
+codex plugin marketplace remove superspec-dev
+codex plugin marketplace add anupam20sep/superspec
+codex plugin list --available -m superspec-dev
+codex plugin add superspec@superspec-dev
+```
+
+If Claude-compat (`.claude-plugin/marketplace.json`) and Codex (`.agents/plugins`) both list SuperSpec, install **once** from the Codex source.
 
 See [Install on your runtime](docs/how-to/install-on-your-runtime.md), [Dispatch on Codex](docs/how-to/dispatch-on-codex.md), and [Acceptance: Codex](docs/acceptance/codex.md).
 

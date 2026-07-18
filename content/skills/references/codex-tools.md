@@ -92,6 +92,7 @@ Or ask in natural language; Codex loads matching skills by description.
 - **Hooks require trust:** Plugin SessionStart hooks are skipped until approved in `/hooks`.
 - **Subagent isolation:** Prefer spawn; if unavailable, use the inline fallback in `superspec-forge` (implement → explicit review boundary → `record-result`).
 - **Dual marketplace:** This repo also ships `.claude-plugin/marketplace.json`. If both appear, install SuperSpec **once** from the Codex (`.agents/plugins`) source and disable the duplicate.
+- **Empty plugin list after marketplace add:** `.agents/plugins/marketplace.json` must use `"path": "./"` (repo root). `"../.."` is rejected; remove and re-add the marketplace after upgrading to Codex ≥ 0.142 / pulling the fix.
 
 ---
 

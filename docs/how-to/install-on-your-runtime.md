@@ -44,9 +44,12 @@ Restart Cursor.
 codex plugin marketplace add anupam20sep/superspec
 # or local clone:
 codex plugin marketplace add /path/to/SuperSpec
+
+codex plugin add superspec@superspec-dev
+codex plugin list --available -m superspec-dev   # should show superspec
 ```
 
-Then install from `/plugins` (TUI) or ChatGPT **Work mode** → Plugins Directory → **SuperSpec**.
+Then open `/plugins` (TUI) or ChatGPT **Work mode** → Plugins Directory → **SuperSpec**.
 
 Includes:
 
@@ -54,14 +57,17 @@ Includes:
 - MCP via `.codex-plugin/plugin.json` → `./.mcp.json` (`npx @superspec-dev/core mcp`)
 - SessionStart hook (`hooks/hooks-codex.json`) — **approve in `/hooks`** after install (Codex skips untrusted plugin hooks)
 
-**Dual marketplace:** the repo also ships `.claude-plugin/marketplace.json`. If both sources list SuperSpec, install **once** from the Codex marketplace (`.agents/plugins`) and disable the duplicate.
+**Marketplace path:** `.agents/plugins/marketplace.json` uses `"path": "./"` (plugin = repo root). Requires Codex CLI **≥ 0.142**. The earlier `"../.."` path is rejected by Codex (parent traversal), so the marketplace loads with **zero plugins**.
 
-**CLI note:** some Codex CLI builds gate the `plugins` feature. If `codex plugin` is missing, use Work mode install, or:
+If you already added the marketplace and see no plugin:
 
 ```bash
-# Skills: link or copy skills/ into .agents/skills/ (or ~/.agents/skills/)
-codex mcp add superspec -- npx -y @superspec-dev/core mcp
+codex plugin marketplace remove superspec-dev
+codex plugin marketplace add anupam20sep/superspec   # or local path
+codex plugin add superspec@superspec-dev
 ```
+
+**Dual marketplace:** the repo also ships `.claude-plugin/marketplace.json`. If both sources list SuperSpec, install **once** from the Codex marketplace (`.agents/plugins`) and disable the duplicate.
 
 Forge dispatch: [Dispatch on Codex](dispatch-on-codex.md). Acceptance: [Codex](../acceptance/codex.md).
 

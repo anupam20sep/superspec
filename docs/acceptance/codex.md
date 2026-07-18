@@ -2,7 +2,7 @@
 
 **Scope:** OpenAI Codex (CLI and ChatGPT Work mode / desktop Codex). Verifies packaging, skill load, MCP, hooks trust, and one forge dispatch path.
 
-**Spike note (2026-07):** Codex CLI `0.116.0` lists the `plugins` feature as under development and may not expose `codex plugin` yet. Packaging still matches [Build plugins](https://developers.openai.com/codex/plugins/build). Prefer ChatGPT Work mode Plugins Directory for install smoke tests when CLI plugins are gated; CLI fallback = skills under `.agents/skills/` + `codex mcp add`.
+**Marketplace path:** `.agents/plugins/marketplace.json` uses `"path": "./"` (plugin = repo root). Requires Codex CLI **≥ 0.142**. Older `"../.."` paths are rejected and yield an empty plugin list.
 
 ---
 
@@ -19,16 +19,27 @@
 ### 1. Marketplace + install
 
 ```bash
-# When CLI plugin commands exist:
 codex plugin marketplace add anupam20sep/superspec
 # or local:
 codex plugin marketplace add /path/to/SuperSpec
 
-codex plugin list   # expect superspec
-# Install via CLI or /plugins UI
+codex plugin list --available -m superspec-dev
+# expect: superspec@superspec-dev
+
+codex plugin add superspec@superspec-dev
 ```
 
 ChatGPT Work mode: Plugins Directory → add marketplace / local source → install **SuperSpec**.
+
+**Path requirement:** `.agents/plugins/marketplace.json` must use `"path": "./"` (repo root). Codex rejects `"../.."` (parent traversal) and silently lists **no plugins**. Requires Codex CLI **≥ 0.142**.
+
+If the marketplace is present but empty:
+
+```bash
+codex plugin marketplace remove superspec-dev
+codex plugin marketplace add anupam20sep/superspec
+codex plugin add superspec@superspec-dev
+```
 
 **Dual listing:** This repo also has `.claude-plugin/marketplace.json`. If both Claude-compat and `.agents/plugins` sources appear, install **once** from the Codex (`.agents/plugins` / `superspec-dev`) source and disable the duplicate.
 

@@ -74,11 +74,14 @@ Skills ship from `./skills/` per `.cursor-plugin/plugin.json`. Optional MCP: add
 ```bash
 codex plugin marketplace add anupam20sep/superspec
 # or: codex plugin marketplace add /path/to/superspec
+codex plugin add superspec@superspec-dev
 ```
 
 Or install from ChatGPT Work mode / desktop Codex → Plugins Directory.
 
-Manifest: `.codex-plugin/plugin.json` → skills, MCP (`.mcp.json`), hooks (`hooks/hooks-codex.json`). Approve hooks in `/hooks` after install. Prefer the Codex marketplace (`.agents/plugins`) if Claude-compat also appears.
+Manifest: `.codex-plugin/plugin.json` → skills, MCP (`.mcp.json`), hooks (`hooks/hooks-codex.json`). Marketplace: `.agents/plugins/marketplace.json` with `"path": "./"` (Codex CLI ≥ 0.142). Approve hooks in `/hooks` after install. Prefer the Codex marketplace (`.agents/plugins`) if Claude-compat also appears.
+
+If the marketplace adds but no plugin appears, you likely have a stale snapshot with the old `"../.."` path — remove and re-add the marketplace after pulling latest.
 
 See [Install on your runtime](how-to/install-on-your-runtime.md) and [Acceptance: Codex](acceptance/codex.md).
 
