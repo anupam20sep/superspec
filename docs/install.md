@@ -1,6 +1,6 @@
 # Installing SuperSpec
 
-SuperSpec is a spec-driven + TDD-driven AI development plugin for Claude Code and Cursor.
+SuperSpec is a spec-driven + TDD-driven AI development plugin for Claude Code, Cursor, and OpenAI Codex.
 
 ## Claude Code
 
@@ -68,6 +68,19 @@ Add the same `npx` entry to that project's own `.mcp.json` if you only want tool
 Or by URL: `/add-plugin https://github.com/anupam20sep/superspec`
 
 Skills ship from `./skills/` per `.cursor-plugin/plugin.json`. Optional MCP: add `npx @superspec-dev/core mcp` to your project's `.cursor/mcp.json` (see main README).
+
+## Codex
+
+```bash
+codex plugin marketplace add anupam20sep/superspec
+# or: codex plugin marketplace add /path/to/superspec
+```
+
+Or install from ChatGPT Work mode / desktop Codex → Plugins Directory.
+
+Manifest: `.codex-plugin/plugin.json` → skills, MCP (`.mcp.json`), hooks (`hooks/hooks-codex.json`). Approve hooks in `/hooks` after install. Prefer the Codex marketplace (`.agents/plugins`) if Claude-compat also appears.
+
+See [Install on your runtime](how-to/install-on-your-runtime.md) and [Acceptance: Codex](acceptance/codex.md).
 
 ## Community marketplace submission
 

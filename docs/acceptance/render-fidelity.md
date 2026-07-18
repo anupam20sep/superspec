@@ -1,6 +1,6 @@
 # Render Fidelity: Single-Source Propagation
 
-**Scope:** GitHub Copilot is deferred (Plan #5b); this check covers the two currently-supported render targets, Claude Code (`skills/`) and Cursor (`.cursor/skills/`).
+**Scope:** GitHub Copilot is deferred (Plan #5b); this check covers the shared render target `skills/` consumed by Claude Code, Cursor, and Codex (no separate Codex render path).
 
 **Expected:** a single edit in `content/skills/<name>/SKILL.md` propagates to both rendered outputs when `@superspec-dev/render`'s CLI is re-run, and nowhere else.
 

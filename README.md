@@ -2,7 +2,7 @@
 
 **Spec-driven + TDD-driven development for AI coding agents.**
 
-SuperSpec fuses [GitHub Spec Kit](https://github.com/github/spec-kit)'s traceable specs (`FR-###`, user stories, `SC-###`) with [Superpowers](https://github.com/obra/superpowers)' mandatory TDD execution (red-green-refactor tasks, subagent dispatch, verification gates). One plugin, one shared engine — identical skills and tools in Claude Code and Cursor.
+SuperSpec fuses [GitHub Spec Kit](https://github.com/github/spec-kit)'s traceable specs (`FR-###`, user stories, `SC-###`) with [Superpowers](https://github.com/obra/superpowers)' mandatory TDD execution (red-green-refactor tasks, subagent dispatch, verification gates). One plugin, one shared engine — identical skills and tools in Claude Code, Cursor, and Codex.
 
 [![npm version](https://img.shields.io/npm/v/%40superspec-dev%2Fcore?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/@superspec-dev/core)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
@@ -29,7 +29,7 @@ SuperSpec fuses [GitHub Spec Kit](https://github.com/github/spec-kit)'s traceabl
 
 ## What is SuperSpec
 
-SuperSpec is a spec-driven + TDD-driven framework for AI coding agents (Claude Code, Cursor, and more). It solves two problems that break agentic development at scale:
+SuperSpec is a spec-driven + TDD-driven framework for AI coding agents (Claude Code, Cursor, and Codex). It solves two problems that break agentic development at scale:
 
 1. **No traceability** — requirements drift from implementation; you cannot prove every `FR-###` shipped with a test.
 2. **Context rot** — long sessions degrade quality as the window fills with diffs, review text, and tool output.
@@ -64,6 +64,7 @@ On review failure: resume the **same** implementer with findings → re-review. 
 |----------|-------------------|-------|
 | **Claude Code** | `Agent` tool | [Dispatch on Claude Code](docs/how-to/dispatch-on-claude-code.md) |
 | **Cursor** | `Task` tool | [Dispatch on Cursor](docs/how-to/dispatch-on-cursor.md) |
+| **Codex** | Multi-agent spawn | [Dispatch on Codex](docs/how-to/dispatch-on-codex.md) |
 
 Full loop: [Run the forge loop](docs/how-to/run-the-forge-loop.md). Context model: [Dispatch and context](docs/explanation/dispatch-and-context.md).
 
@@ -88,14 +89,23 @@ claude plugin marketplace add anupam20sep/superspec
 claude plugin install superspec@superspec-dev
 ```
 
-Restart the session or run `/reload-plugins` after install. [Install details →](docs/how-to/install-on-your-runtime.md)
-
 In Claude Code chat:
 
 ```
 /plugin marketplace add anupam20sep/superspec
 /plugin install superspec@superspec-dev
 ```
+
+**Codex** — CLI or ChatGPT Work mode:
+
+```bash
+codex plugin marketplace add anupam20sep/superspec
+# or local: codex plugin marketplace add /path/to/SuperSpec
+```
+
+Then install from `/plugins`, or open ChatGPT **Work mode** / desktop Codex → Plugins Directory → **SuperSpec**. After install, approve SessionStart hooks in `/hooks` (Codex skips untrusted plugin hooks). MCP is bundled via `.codex-plugin` → `.mcp.json`.
+
+Restart the session (or `/reload-plugins` on Claude) after install. [Install details →](docs/how-to/install-on-your-runtime.md)
 
 ### 2. Bootstrap your repo (once)
 
@@ -127,12 +137,13 @@ The **`using-superspec`** skill routes to the right lane. You don't memorize the
 |----------|--------|-----------|
 | **Claude Code** | Bundled with plugin (`skills/`, `agents/`, `hooks/`) | **Bundled** — plugin `.mcp.json` runs `npx @superspec-dev/core mcp` automatically |
 | **Cursor** | Bundled with plugin (`skills/`, hooks) | **Manual** — add `.cursor/mcp.json` in your project (see below) |
+| **Codex** | Bundled with plugin (`skills/`, hooks) | **Bundled** — `.codex-plugin` points at the same `.mcp.json` |
 
 On first MCP use, `npx` downloads `@superspec-dev/core` from npm. Requires Node.js on your PATH. No `npm install` in your project.
 
-**Without MCP (Cursor only):** skills still work — the agent can run `npx @superspec-dev/core lint …` in the terminal during `validate`.
+**Without MCP (Cursor / CLI fallback):** skills still work — the agent can run `npx @superspec-dev/core lint …` in the terminal during `validate`. On Codex without the plugin, you can also `codex mcp add superspec -- npx -y @superspec-dev/core mcp`.
 
-**Cursor — add MCP to your project** (recommended):
+**Cursor — add MCP to your project** (recommended when not using another platform's bundled config):
 
 ```json
 {
@@ -160,6 +171,7 @@ Save as `.cursor/mcp.json` in your project root and restart Cursor. Details: [In
 - [Run the forge loop](docs/how-to/run-the-forge-loop.md)
 - [Dispatch on Claude Code](docs/how-to/dispatch-on-claude-code.md)
 - [Dispatch on Cursor](docs/how-to/dispatch-on-cursor.md)
+- [Dispatch on Codex](docs/how-to/dispatch-on-codex.md)
 - [Track forge progress](docs/how-to/track-forge-progress.md)
 - [Route parallel execution](docs/how-to/route-parallel-execution.md)
 - [Validate before ship](docs/how-to/validate-before-ship.md)
@@ -263,7 +275,7 @@ One plugin. One lifecycle. Skills guide the agent through each phase; `@superspe
 ### First-time setup (per repository)
 
 1. **`superspec-init`** — choose **lite** (single spec) or **full** (multi-spec + `program.md`).
-2. **MCP** — automatic on Claude Code (plugin `.mcp.json`); on Cursor, add `.cursor/mcp.json` (see [Quickstart](#mcp-tools--how-they-work-per-platform)).
+2. **MCP** — automatic on Claude Code and Codex (plugin `.mcp.json`); on Cursor, add `.cursor/mcp.json` (see [Quickstart](#mcp-tools--how-they-work-per-platform)).
 3. **Custom agents** (optional) — if you already have `.cursor/agents/` or `.claude/agents/`, `route` and `forge` discover them automatically.
 
 ### Pick your lane
@@ -283,7 +295,7 @@ One plugin. One lifecycle. Skills guide the agent through each phase; `@superspe
 scope → refine → architect → plan → [worktree] → route → forge → validate → ship
 ```
 
-Forge dispatch: [Run the forge loop](docs/how-to/run-the-forge-loop.md) · [Claude Code](docs/how-to/dispatch-on-claude-code.md) · [Cursor](docs/how-to/dispatch-on-cursor.md)
+Forge dispatch: [Run the forge loop](docs/how-to/run-the-forge-loop.md) · [Claude Code](docs/how-to/dispatch-on-claude-code.md) · [Cursor](docs/how-to/dispatch-on-cursor.md) · [Codex](docs/how-to/dispatch-on-codex.md)
 
 ### What gets created in your project
 
@@ -436,15 +448,15 @@ Start MCP server: `npx -y @superspec-dev/core mcp`
 
 ### What the plugin installs vs what npm provides
 
-Both Cursor and Claude Code install from the **GitHub repo** — skills, hooks, and (for Claude) agents. The verification engine is always **`@superspec-dev/core` from npm**, fetched by `npx` on first use.
+Both Cursor, Claude Code, and Codex install from the **GitHub repo** — skills, hooks, and (for Claude) agents. The verification engine is always **`@superspec-dev/core` from npm**, fetched by `npx` on first use.
 
-| Component | Cursor (`/add-plugin`) | Claude Code (`superspec@superspec-dev`) | Source |
-|-----------|------------------------|----------------------------------------|--------|
-| Skills (`skills/`) | Yes | Yes | GitHub |
-| Hooks | `hooks-cursor.json` | `hooks/hooks.json` | GitHub |
-| Agents | — | `agents/` | GitHub |
-| MCP config | You add `.cursor/mcp.json` | Bundled (repo `.mcp.json`) | npm via `npx` |
-| `@superspec-dev/render` | No | No | Maintainers only |
+| Component | Cursor (`/add-plugin`) | Claude Code (`superspec@superspec-dev`) | Codex (plugins / Work mode) | Source |
+|-----------|------------------------|----------------------------------------|------------------------------|--------|
+| Skills (`skills/`) | Yes | Yes | Yes | GitHub |
+| Hooks | `hooks-cursor.json` | `hooks/hooks.json` | `hooks/hooks-codex.json` | GitHub |
+| Agents | — | `agents/` | paste `agents/*.md` into spawn | GitHub |
+| MCP config | You add `.cursor/mcp.json` | Bundled (repo `.mcp.json`) | Bundled (`.codex-plugin` → `.mcp.json`) | npm via `npx` |
+| `@superspec-dev/render` | No | No | No | Maintainers only |
 
 ```
 GitHub plugin install
@@ -454,6 +466,7 @@ GitHub plugin install
         └─► MCP engine: npx @superspec-dev/core mcp  (from npm, on first use)
               │
               ├─ Claude: automatic (plugin .mcp.json)
+              ├─ Codex: automatic (plugin mcpServers → .mcp.json)
               └─ Cursor: manual (.cursor/mcp.json in your project)
 ```
 
@@ -500,9 +513,29 @@ Or: `/add-plugin https://github.com/anupam20sep/superspec`
 
 Skills ship from `./skills/` (same layout as [obra/superpowers](https://github.com/obra/superpowers)). Add `.cursor/mcp.json` for MCP tools — see [Install on your runtime](docs/how-to/install-on-your-runtime.md).
 
+### Codex
+
+```bash
+codex plugin marketplace add anupam20sep/superspec
+# or local: codex plugin marketplace add /path/to/SuperSpec
+# Then install via /plugins or `codex plugin` when your CLI build exposes it
+```
+
+ChatGPT **Work mode** / desktop Codex: Plugins Directory → install **SuperSpec**.
+
+Includes:
+
+- Skills from `./skills/` (`.codex-plugin/plugin.json`)
+- MCP via the same `.mcp.json` (`npx @superspec-dev/core mcp`)
+- SessionStart hooks (`hooks/hooks-codex.json`) — **approve in `/hooks`** after install
+
+If Claude-compat (`.claude-plugin/marketplace.json`) and Codex (`.agents/plugins`) both list SuperSpec, install **once** from the Codex source. Some Codex CLI builds gate the `plugins` feature — use Work mode, or fall back to `.agents/skills/` + `codex mcp add superspec -- npx -y @superspec-dev/core mcp`.
+
+See [Install on your runtime](docs/how-to/install-on-your-runtime.md), [Dispatch on Codex](docs/how-to/dispatch-on-codex.md), and [Acceptance: Codex](docs/acceptance/codex.md).
+
 ### MCP only (no full plugin)
 
-Add to `.cursor/mcp.json` or `.mcp.json` in any project:
+Add to `.cursor/mcp.json`, `.mcp.json`, or Codex `~/.codex/config.toml` / `codex mcp add` in any project:
 
 ```json
 {
@@ -515,8 +548,7 @@ Add to `.cursor/mcp.json` or `.mcp.json` in any project:
 }
 ```
 
-See [Install on your runtime](docs/how-to/install-on-your-runtime.md). GitHub Copilot support is planned.
-
+See [Install on your runtime](docs/how-to/install-on-your-runtime.md). Codex is supported via `.codex-plugin/`; GitHub Copilot support is planned.
 ---
 
 ## What's in the repo
@@ -524,14 +556,16 @@ See [Install on your runtime](docs/how-to/install-on-your-runtime.md). GitHub Co
 ```
 .claude-plugin/     ← Claude marketplace manifest
 .cursor-plugin/     ← Cursor plugin manifest
-.mcp.json           ← Claude plugin MCP (npx @superspec-dev/core)
+.codex-plugin/      ← Codex plugin manifest
+.agents/plugins/    ← Codex-native marketplace
+.mcp.json           ← Claude/Codex plugin MCP (npx @superspec-dev/core)
 docs/               ← tutorials, how-to guides, reference, explanation
 content/skills/     ← canonical skill source (edit here)
 content/templates/  ← spec, plan, design, constitution templates
 content/agents/     ← subagent prompt bodies (implementer, reviewers)
-skills/             ← rendered output (Claude + Cursor plugin consume this)
-agents/             ← Claude Code agent files (with frontmatter)
-hooks/              ← hooks.json (Claude) + hooks-cursor.json (Cursor)
+skills/             ← rendered output (Claude + Cursor + Codex plugins consume this)
+agents/             ← Claude Code agent files (with frontmatter); Codex pastes into spawn
+hooks/              ← hooks.json (Claude) + hooks-cursor.json + hooks-codex.json
 packages/core/      ← @superspec-dev/core (MCP + CLI, published to npm)
 packages/render/    ← @superspec-dev/render (skill renderer, published to npm)
 examples/           ← worked examples (url-shortener)
@@ -543,8 +577,9 @@ examples/           ← worked examples (url-shortener)
 
 | What | How |
 |------|-----|
-| Skills (Cursor + Claude GitHub install) | `git push` — updates `skills/` in repo |
+| Skills (Cursor + Claude + Codex GitHub install) | `git push` — updates `skills/` in repo |
 | Claude marketplace (community) | Submit at [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit) |
+| Codex marketplace / Work mode | Ship `.codex-plugin/` + `.agents/plugins/marketplace.json`; install from repo or Plugins Directory |
 | MCP/CLI engine | `npm publish` → `@superspec-dev/core` |
 | Render CLI | `npm publish` → `@superspec-dev/render` (maintainers only) |
 
@@ -570,7 +605,7 @@ npm run dogfood:url-shortener   # validation ladder on worked example
 - **Evidence before assertions** — `validate` runs real commands before "done."
 - **Advise-only** — report gaps; you decide what to do.
 - **Fresh context per task** — one implementer + one reviewer per forge task.
-- **One source, every tool** — skills authored once, rendered to `skills/`.
+- **One source, every tool** — skills authored once, rendered to `skills/` for Claude, Cursor, and Codex.
 
 ---
 

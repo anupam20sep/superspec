@@ -19,7 +19,7 @@ function skillFile(outRoot: string, subdir: string, name: string, skill: Skill):
 }
 
 // Single output layout: repo-root `skills/` (same as obra/superpowers).
-// Claude Code and Cursor's `.cursor-plugin/plugin.json` both consume this path.
+// Claude Code, Cursor (`.cursor-plugin`), and Codex (`.codex-plugin`) all consume this path.
 export const skillsTarget: Target = {
   name: "skills",
   render: (skill, outRoot) => [skillFile(outRoot, "skills", skill.name, skill)],

@@ -13,10 +13,11 @@ Documentation is organised into four quadrants: **tutorials** help you learn by 
 
 ## How-to guides
 
-- [Install on your runtime](how-to/install-on-your-runtime.md) — Claude Code, Cursor, and MCP-only setup
+- [Install on your runtime](how-to/install-on-your-runtime.md) — Claude Code, Cursor, Codex, and MCP-only setup
 - [Run the forge loop](how-to/run-the-forge-loop.md) — per-task implement → review → record cycle with persisted state
 - [Dispatch on Claude Code](how-to/dispatch-on-claude-code.md) — `Agent` tool, `implementer` + `task-reviewer` agents
 - [Dispatch on Cursor](how-to/dispatch-on-cursor.md) — `Task` tool, `implementer` + `task-reviewer` agents
+- [Dispatch on Codex](how-to/dispatch-on-codex.md) — multi-agent spawn, `implementer` + `task-reviewer` prompts
 - [Track forge progress](how-to/track-forge-progress.md) — `status.md`, `state.json`, TodoWrite, and resume after compaction
 - [Route parallel execution](how-to/route-parallel-execution.md) — execution windows, model routing, personas
 - [Validate before ship](how-to/validate-before-ship.md) — lint gates, coverage matrix, evidence commands

@@ -1,0 +1,29 @@
+{
+  "name": "superspec",
+  "version": "0.3.0",
+  "description": "Spec-driven + TDD-driven AI development for Codex: explore, scope, design, plan, forge, validate, and ship with traceable requirements and mandatory TDD for code tasks.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks-codex.json",
+  "author": {
+    "name": "SuperSpec contributors"
+  },
+  "homepage": "https://github.com/anupam20sep/superspec",
+  "repository": "https://github.com/anupam20sep/superspec",
+  "license": "MIT",
+  "keywords": [
+    "sdd",
+    "tdd",
+    "spec-driven",
+    "planning",
+    "subagents",
+    "forge",
+    "traceability",
+    "coverage-matrix"
+  ],
+  "interface": {
+    "displayName": "SuperSpec",
+    "shortDescription": "Spec-driven + TDD forge loop for Codex",
+    "category": "Productivity"
+  }
+}

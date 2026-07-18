@@ -163,7 +163,7 @@ The reviewer returns **two independent verdicts** in one report (adapted from Su
 
 **On repeated failure:** `record-result --passed false` (state machine allows up to 3 review failures, then `blocked`).
 
-## Per-Task Dispatch Playbook (Claude Code & Cursor)
+## Per-Task Dispatch Playbook (Claude Code, Cursor & Codex)
 
 The forge coordinator runs this loop per task. **Before the loop**, run forge start (once). Steps 0–9 below are per-session; steps 1–9 repeat per task.
 
@@ -276,16 +276,55 @@ Task({
 
 **Personas:** `list-personas` scans `.cursor/agents/` and `.claude/agents/`. Use discovered names in `subagent_type` when the platform exposes them; otherwise paste persona description into the implementer prompt.
 
-### Inline fallback (either platform)
+### Codex
 
-When subagent/`Task` dispatch is unavailable, the coordinator implements and reviews **in one session** but must still enforce separation of concerns:
+Codex supports isolated work via **multi-agent spawn** (and optional `.codex/agents/*.toml` custom agents). See `references/codex-tools.md`. When spawn is unavailable, use the inline fallback at the end of this section.
+
+**Implementer** — fresh agent, zero prior forge context:
+
+```text
+spawn({
+  prompt: """
+  You are the implementer. Follow agents/implementer.md discipline.
+
+  [Paste filled implementer.md with TASK_NAME, FR, acceptance criteria, constitution excerpt]
+
+  Red-green-refactor. Run tests. Commit. Report BASE_SHA and HEAD_SHA.
+  """,
+  model: "<routed implementer model>"
+})
+```
+
+**Reviewer** — fresh agent, **read-only intent**, different model than implementer:
+
+```text
+spawn({
+  prompt: """
+  You are task-reviewer. Follow agents/task-reviewer.md exactly.
+  Read-only — do not modify files.
+
+  [Paste filled task-reviewer.md with task brief, constitution, diff, commit range]
+
+  Return spec compliance AND code quality verdicts.
+  """,
+  model: "<routed reviewer model>"
+})
+```
+
+**Fix loop:** resume the **same** implementer spawn/thread with reviewer findings; re-spawn the reviewer fresh after each fix. Do not call `next-task` while review is open.
+
+**Personas:** `list-personas` does not yet scan `.codex/agents/*.toml`. On Codex use `@fallback` roles from the execution map, or paste a markdown persona description into the implementer prompt.
+
+### Inline fallback (any platform)
+
+When subagent/`Task`/spawn dispatch is unavailable, the coordinator implements and reviews **in one session** but must still enforce separation of concerns:
 
 1. Implement using `implementer.md` discipline (TDD, commit).
 2. **Stop.** Open a new message or explicit "review mode" boundary.
 3. Apply `task-reviewer.md` checklist against the diff **as if you were a different reviewer** — do not rationalize your own choices.
 4. Only then call `record-result`.
 
-This is slower and easier to cheat; prefer isolated dispatch on both Claude Code and Cursor when the tooling exists.
+This is slower and easier to cheat; prefer isolated dispatch on Claude Code, Cursor, and Codex when the tooling exists.
 
 ## Stuck-Task Escalation
 

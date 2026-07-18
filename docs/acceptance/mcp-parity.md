@@ -1,6 +1,6 @@
 # MCP Parity: Claude Code vs Cursor
 
-**Scope:** GitHub Copilot is deferred (Plan #5b, not yet built); this check covers the two currently-supported tools, Claude Code and Cursor, both of which point their own MCP config at the identical server binary (`packages/core/dist/mcp-server.js`), just via each harness's own path-variable convention (`${CLAUDE_PLUGIN_ROOT}` vs `${workspaceFolder}`).
+**Scope:** GitHub Copilot is deferred (Plan #5b, not yet built); this check covers Claude Code, Cursor, and Codex. All point at the identical MCP server (`@superspec-dev/core` via `npx` / `packages/core/dist/mcp-server.js`). Claude and Codex bundle repo `.mcp.json`; Cursor uses project `.cursor/mcp.json`.
 
 **Expected:** calling the same `build-matrix` MCP tool with the same `specText`/`planText` inputs must yield identical output in both tools.
 

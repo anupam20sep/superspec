@@ -1,0 +1,22 @@
+{
+  "name": "superspec-dev",
+  "interface": {
+    "displayName": "SuperSpec"
+  },
+  "plugins": [
+    {
+      "name": "superspec",
+      "description": "Full lifecycle plugin: specs, TDD plans, forge loop, lint gates, and coverage matrix.",
+      "version": "0.3.0",
+      "source": {
+        "source": "local",
+        "path": "../.."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

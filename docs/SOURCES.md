@@ -56,7 +56,7 @@ Authored in Plan #2 (shared content layer). **This is where the bulk of the valu
 | `content/templates/coverage-matrix-template.md` | **neither** | NEW |
 | `content/templates/constitution.md` | `SK: templates/constitution-template.md` + `.specify/memory/constitution.md` — but with mandatory-TDD & traceability as **fixed** principles (not blank slots) | ADAPT |
 | `content/agents/{spec-reviewer,implementer,task-reviewer}.md` | `SP: skills/subagent-driven-development/{implementer-prompt.md,task-reviewer-prompt.md}`, `requesting-code-review/code-reviewer.md` | COPY/ADAPT |
-| `content/skills/references/{claude-code,cursor,copilot}-tools.md` | `SP: skills/using-superpowers/references/{codex,pi,antigravity}-tools.md` (pattern) | ADAPT |
+| `content/skills/references/{claude-code,cursor,codex,copilot}-tools.md` | `SP: skills/using-superpowers/references/{codex,pi,antigravity}-tools.md` (pattern) | ADAPT |
 
 **Platform-neutral prose rules** to apply while copying: `SP: docs/superpowers/specs/2026-05-05-platform-neutral-prose-design.md` and `.../2026-05-05-platform-neutral-config-refs-design.md`.
 
@@ -68,12 +68,16 @@ Authored in Plan #2 (shared content layer). **This is where the bulk of the valu
 |---|---|---|
 | `.claude-plugin/plugin.json` | `SP: .claude-plugin/plugin.json` | COPY (rename) |
 | `.cursor-plugin/plugin.json` | `SP: .cursor-plugin/plugin.json` | COPY (rename) |
+| `.codex-plugin/plugin.json` | OpenAI Codex [Build plugins](https://developers.openai.com/codex/plugins/build) + `SP` harness pattern | NEW + ADAPT |
+| `.agents/plugins/marketplace.json` | Codex marketplace schema (`source.local.path`) | NEW |
 | `hooks/hooks.json` (Claude SessionStart bootstrap) | `SP: hooks/hooks.json` | ADAPT |
 | `hooks/hooks-cursor.json` | `SP: hooks/hooks-cursor.json` (+ `hooks/run-hook.cmd`, `hooks/session-start`) | ADAPT |
+| `hooks/hooks-codex.json` | Codex hooks (`SessionStart` + `matcher: startup\|resume`) | NEW + ADAPT |
 | Bootstrap-injection method (all adapters) | `SP: docs/porting-to-a-new-harness.md`; shims `.opencode/plugins/superpowers.js`, `.pi/extensions/superpowers.ts` | REIMPLEMENT (pattern) |
 | Copilot: `.github/prompts/*.prompt.md`, `.github/agents/*.agent.md` layout | `SK: src/specify_cli/integrations/` Copilot target (confirmed output shape) | REIMPLEMENT (pattern) |
 | `AGENTS.md` (generic fallback) | `SP: AGENTS.md` | ADAPT |
 | Copilot acceptance test (fresh session auto-triggers a stage) | `SP: docs/porting-to-a-new-harness.md` "definition of done" | COPY (method) |
+| Codex acceptance (`docs/acceptance/codex.md`) | Same porting "definition of done" method | COPY (method) |
 
 ---
 
@@ -81,7 +85,7 @@ Authored in Plan #2 (shared content layer). **This is where the bulk of the valu
 
 | SuperSpec artifact | Upstream source | Strategy |
 |---|---|---|
-| `packages/render/src/targets.ts` (`INTEGRATION_REGISTRY`, `claudeTarget`/`cursorTarget`; scoped to Claude+Cursor, `copilotTarget` deferred) | `SK: src/specify_cli/integrations/_commands.py`, `_scaffold_commands.py`, `_install_commands.py` (declarative per-target `{dir, format, args-token, extension}`) | REIMPLEMENT (Python→TS) |
+| `packages/render/src/targets.ts` (`INTEGRATION_REGISTRY`, `skillsTarget`; Claude + Cursor + Codex share `skills/`; `copilotTarget` deferred) | `SK: src/specify_cli/integrations/_commands.py`, `_scaffold_commands.py`, `_install_commands.py` (declarative per-target `{dir, format, args-token, extension}`) | REIMPLEMENT (Python→TS) |
 | `packages/render/src/skill-reader.ts` (SKILL.md → `{name, frontmatter, body}`) + `packages/render/src/render.ts` (walk `content/skills/`, apply target, write) + `packages/render/src/cli.ts` (`superspec-render` entrypoint) | `SK: IntegrationBase.process_template()` + format base classes (`MarkdownIntegration`/`TomlIntegration`/`SkillsIntegration`) | REIMPLEMENT |
 | Installed-file manifest (safe re-render) | `SK: src/specify_cli/.../manifest.py` (SHA-256 tracking) | REIMPLEMENT (optional, not built — retrofit no-op-diff check serves the same safety purpose today) |
 
