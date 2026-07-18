@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildMatrix, matrixGaps } from "../src/matrix.js";
+import { parsePlan } from "../src/plan-parser.js";
 import type { Requirement, Task } from "../src/types.js";
 
 const reqs: Requirement[] = [
@@ -30,5 +31,15 @@ describe("buildMatrix", () => {
 describe("matrixGaps", () => {
   it("lists uncovered requirement ids", () => {
     expect(matrixGaps(buildMatrix(reqs, tasks))).toEqual(["FR-002"]);
+  });
+
+  it("covers FR when Implements uses qualifier prose", () => {
+    const plan = parsePlan([
+      "### Task T001: Bootstrap",
+      "**Implements:** FR-001, FR-002 (config bootstrap part)",
+    ].join("\n"));
+    const m = buildMatrix(reqs, plan);
+    expect(matrixGaps(m)).toEqual([]);
+    expect(m.rows.find((r) => r.fr === "FR-002")?.covered).toBe(true);
   });
 });

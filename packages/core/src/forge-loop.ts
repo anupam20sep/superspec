@@ -18,7 +18,13 @@ export interface ForgeStatus {
   blocked: number;
   pending: number;
   inProgress: number;
+  /** True when every task is done — not the same as validate-ready. */
   complete: boolean;
+  /**
+   * Human-facing note: task loop finished ≠ principles satisfied.
+   * Present when complete is true.
+   */
+  nextStep?: string;
 }
 
 export function initState(tasks: Task[]): ForgeState {
@@ -82,13 +88,20 @@ export function forgeStatus(state: ForgeState): ForgeStatus {
   const blocked = values.filter((v) => v.status === "blocked").length;
   const inProgress = values.filter((v) => v.status === "in_progress").length;
   const pending = values.filter((v) => v.status === "pending").length;
+  const complete = values.length > 0 && done === values.length;
   return {
     total: values.length,
     done,
     blocked,
     pending,
     inProgress,
-    complete: values.length > 0 && done === values.length,
+    complete,
+    ...(complete
+      ? {
+          nextStep:
+            "Tasks complete — run superspec-validate (matrix + lint-plan + standing gates) before ship. forge complete ≠ validate-ready.",
+        }
+      : {}),
   };
 }
 

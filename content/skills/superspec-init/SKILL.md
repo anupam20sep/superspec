@@ -35,6 +35,8 @@ Do NOT scaffold tier templates into `docs/`, a user-provided resources path, or 
 | `specs/` | Future feature directories (`specs/<feature>/spec.md`, …) |
 | `.superspec/README.md` | Explains repo-level metadata |
 | `.superspec/templates/` | Reference copies of tier templates (not live specs) |
+| `.superspec/templates/models.example.yaml` | Optional model-routing template (reference only) |
+| `.superspec/models.yaml` | **Optional** — only if you opt in (`--with-models`); agents use skill defaults without it |
 | `program.md` | Full mode only — multi-spec backlog at repo root |
 
 Per-feature artifacts (`spec.md`, `plan.md`, `execution-map.md`, `status.md`) are created later under `specs/<feature>/` by scope/plan/forge — **not** during init. The plan phase produces both `plan.md` and `execution-map.md`.
@@ -55,21 +57,33 @@ Present both options and get explicit user choice before proceeding:
 
 2. **Ask mode** — `lite` or `full`. Do not assume.
 
-3. **Run init CLI** (preferred — bundled templates, correct layout):
+3. **Ask optional model config (default: skip)** —  
+   "Do you want a `.superspec/models.yaml` to customize which models map to economy/standard/frontier, roles, and task kinds? This is **optional**. Skip to use SuperSpec defaults."  
+   - If **no / skip** → run init without `--with-models` (recommended default).  
+   - If **yes** → pass `--with-models` (user can edit slugs later).  
+   Never force this step. Never block init on it.
+
+4. **Run init CLI** (preferred — bundled templates, correct layout):
 
    ```bash
+   # Default — no models.yaml (agents use built-in defaults)
    npx -y @superspec-dev/core@latest init --root . --mode lite --verbose
+
+   # Optional — also write .superspec/models.yaml from the example template
+   npx -y @superspec-dev/core@latest init --root . --mode lite --with-models --verbose
    ```
 
-   Or MCP `init` with `{ "root": "<absolute-repo-root>", "mode": "lite" | "full", "verbose": true }`.
+   Or MCP `init` with `{ "root": "<absolute-repo-root>", "mode": "lite" | "full", "verbose": true, "withModels": false }`.
 
    **Verify success:** stdout must show `SuperSpec init: OK` and `filesWritten` ≥ 8. If `filesWritten` is 0 or output is empty, the CLI did not run — use `--verbose` and an absolute `--root` path.
 
    Templates ship inside `@superspec-dev/core`; do **not** point at plugin `content/templates/` unless init fails and you are debugging.
 
-4. **Create TodoWrite items** for: mode chosen, init command run, files verified.
+   Later opt-in without re-init: copy `.superspec/templates/models.example.yaml` → `.superspec/models.yaml` and edit.
 
-5. **Confirm** — report paths created and recommend `superspec-explore` or `superspec-ingest`.
+5. **Create TodoWrite items** for: mode chosen, models opt-in yes/no, init command run, files verified.
+
+6. **Confirm** — report paths created and recommend `superspec-explore` or `superspec-ingest`.
 
 ## Handoff
 
@@ -84,3 +98,4 @@ Present both options and get explicit user choice before proceeding:
 - **Never dump templates into docs/** — `.superspec/templates/` is the reference copy
 - **Use `init` command**, not raw `scaffold --out <docs-path>`
 - **Explicit mode choice** recorded in `constitution.md`
+- **Model routing config is optional** — skip `--with-models` unless the user wants custom slugs; missing `.superspec/models.yaml` means skill/builtin defaults

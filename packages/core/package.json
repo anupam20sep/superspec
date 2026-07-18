@@ -1,7 +1,7 @@
 {
   "name": "@superspec-dev/core",
-  "version": "0.2.5",
-  "description": "Shared engine behind SuperSpec's spec-driven + TDD-driven lifecycle — MCP server and CLI for init, matrix, lint, scaffold, forge loop, FR status sync, and persona discovery.",
+  "version": "0.2.11",
+  "description": "Shared engine behind SuperSpec's spec-driven + TDD-driven lifecycle — MCP server and CLI for init, matrix, lint, scaffold, forge loop, FR status sync, persona discovery, and model routing.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -9,8 +9,14 @@
     "url": "git+https://github.com/anupam20sep/superspec.git"
   },
   "main": "./dist/index.js",
-  "bin": { "superspec": "bin/superspec.js" },
-  "files": ["dist", "templates", "bin"],
+  "bin": {
+    "superspec": "bin/superspec.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "bin"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -21,6 +27,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@superspec-dev/render": "^0.2.0",
+    "yaml": "^2.9.0",
     "zod": "^3.23.0"
   }
 }

@@ -24,7 +24,9 @@ Each task below follows this shape:
 - **Implements**: the functional requirement ID(s) from spec.md this task satisfies
 - **Depends on**: task IDs that must land first, or `none`
 - **Kind**: `code` (red-green-refactor) | `verify` (run checks, capture evidence) | `provision` (infra/env setup) | `signoff` (human gate) | `doc-sync` (update docs/specs)
-- **Complexity**: `mechanical` (pure plumbing, low risk) | `moderate` | `complex` (needs design judgment)
+- **Complexity**: `mechanical` | `moderate` | `complex` — classify with the quality-first rubric in `superspec-plan` (when between two labels, pick the higher; never label `mechanical` if design choices are still open)
+- **Complexity rationale**: one line citing which decision test applied (design decided? blast radius? reasoning depth? bug-fix shape? kind bias?)
+- **Machine contracts**: `Implements:` may use `FR-002 (slice)` — bare `FR-###` are extracted for the matrix; set `**Kind:**` or `[Kind: …]` in the heading; code tasks need failing-test + green verify (`Expected: PASS` / `verify pass` OK)
 - **Files**: exact paths to create, modify, and test
 - **Interfaces**: what the task consumes from other tasks and what it produces for them
 - Numbered steps: `code` tasks use five TDD steps (failing test → confirm fail → minimal impl → confirm pass → commit); other kinds use type-appropriate proof steps (see constitution Principle 1)
@@ -40,6 +42,8 @@ Each task below follows this shape:
 **Kind:** code
 
 **Complexity:** mechanical
+
+**Complexity rationale:** Design decided in design.md; single pure function with exact AC — recipe execution (decision tests 1–3).
 
 **Files:**
 - Create: `src/slug.ts`
@@ -95,7 +99,7 @@ Each task below follows this shape:
 
 ## Phase 2: [Next Phase Name]
 
-[Add further `### Task Txxx: [Name]` blocks here, following the exact shape modeled above: Implements/Depends on/Kind/Complexity/Files/Interfaces, then numbered steps matched to Kind — `code` tasks use the five TDD steps shown above; `verify`/`provision`/`signoff`/`doc-sync` tasks use type-appropriate proof per constitution Principle 1. Every task in this plan must be filled out this completely before implementation begins.]
+[Add further `### Task Txxx: [Name]` blocks here, following the exact shape modeled above: Implements/Depends on/Kind/Complexity/Complexity rationale/Files/Interfaces, then numbered steps matched to Kind — `code` tasks use the five TDD steps shown above; `verify`/`provision`/`signoff`/`doc-sync` tasks use type-appropriate proof per constitution Principle 1. Every task in this plan must be filled out this completely before implementation begins.]
 
 ## No Empty Placeholders
 

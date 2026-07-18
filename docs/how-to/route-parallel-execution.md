@@ -14,7 +14,7 @@ After `plan.md` exists. **superspec-plan** chains **superspec-route** automatica
 
 - Dependency DAG
 - **Parallel windows** — tasks with no shared writes that can run concurrently
-- **Model routing** — mechanical/moderate → fast; complex → strong
+- **Model routing** — mechanical → economy; moderate → standard; complex → frontier (validate complexity with plan rubric first)
 - **Personas** — from `list-personas` or `@fallback` roles
 - Verification gates per window
 

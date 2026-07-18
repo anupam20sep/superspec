@@ -28,7 +28,7 @@ Skills ship from plugin `skills/`. Add MCP manually — create `.cursor/mcp.json
   "mcpServers": {
     "superspec": {
       "command": "npx",
-      "args": ["-y", "@superspec-dev/core@0.2.5", "mcp"]
+      "args": ["-y", "@superspec-dev/core@0.2.11", "mcp"]
     }
   }
 }
@@ -80,7 +80,7 @@ Forge dispatch: [Dispatch on Codex](dispatch-on-codex.md). Acceptance: [Codex](.
   "mcpServers": {
     "superspec": {
       "command": "npx",
-      "args": ["-y", "@superspec-dev/core@0.2.5", "mcp"]
+      "args": ["-y", "@superspec-dev/core@0.2.11", "mcp"]
     }
   }
 }
@@ -94,12 +94,16 @@ Skills still work from the plugin; without MCP, run CLI via `npx @superspec-dev/
 
 ```bash
 npx -y @superspec-dev/core@latest init --root . --mode lite --verbose
+# Optional model overrides:
+# npx -y @superspec-dev/core@latest init --root . --mode lite --with-models --verbose
 ```
 
 | Mode | Creates |
 |------|---------|
-| `lite` | `constitution.md`, `specs/`, templates |
+| `lite` | `constitution.md`, `specs/`, templates (+ `models.example.yaml` reference) |
 | `full` | Above + `program.md` for multi-spec coordination |
+
+`--with-models` is optional and off by default. Without `.superspec/models.yaml`, forge uses built-in tier defaults.
 
 ---
 

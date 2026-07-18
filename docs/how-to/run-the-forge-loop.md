@@ -23,7 +23,7 @@ DIR=specs/$FEATURE
 ## Shared loop (every platform)
 
 ```text
-1. route-model (MCP)     → fast vs strong for implementer AND reviewer
+1. route-model (MCP)     → economy/standard/frontier (+ slug) for implementer AND reviewer
 2. next-task --verbose   → next DAG-ready pending task
 3. begin-task --task T00X --verbose
 4. Dispatch implementer  → agents/implementer.md (see platform guides)
@@ -78,7 +78,7 @@ After **3** failed reviews, the state machine marks the task `blocked` — escal
 | `record-result` | `record-result` | Pass `specText` + `specDir` to refresh `status.md` |
 | `sync-status` | `sync-status` | Writes `status.md` |
 | `forge-status` | `forge-status` | Pass `specText` + `specDir` to also write `status.md` |
-| `route-model` | `route-model` | `mechanical`/`moderate` → fast; `complex` → strong |
+| `route-model` | `route-model` | `mechanical`→economy; `moderate`→standard; `complex`→frontier |
 
 ---
 

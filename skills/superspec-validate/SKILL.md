@@ -15,6 +15,8 @@ Claiming a feature is complete without verification is dishonest, not efficient.
 
 **Validating a SuperSpec feature means**: (1) running the actual tools (`build-matrix`, `lint-plan`); (2) reading the real output (not assuming); (3) checking constitution compliance (Principle 1: Test-First (NON-NEGOTIABLE), Principle 2: Traceability Spine (NON-NEGOTIABLE)) with explicit evidence; (4) verifying per-window gates from the execution map are satisfied; (5) reporting actual results, not assumptions.
 
+**Note:** `forge-status` `complete: true` only means every task is `done`. It does **not** mean the matrix is complete or lint-plan is clean — this skill is the gate before ship.
+
 ## The Iron Law
 
 ```

@@ -121,6 +121,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         templates: { type: "string" },
         feature: { type: "string" },
         verbose: { type: "boolean", short: "v" },
+        "with-models": { type: "boolean" },
       },
     });
     if (values.mode !== "lite" && values.mode !== "full") {
@@ -137,6 +138,7 @@ async function runCliInner(argv: string[]): Promise<CliResult> {
         templatesDir: values.templates as string | undefined,
         feature: values.feature as string | undefined,
         verbose,
+        withModels: values["with-models"] === true,
       });
       if (result.filesWritten === 0) {
         return {

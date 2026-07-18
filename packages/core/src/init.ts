@@ -11,6 +11,11 @@ export interface InitOptions {
   templatesDir?: string;
   feature?: string;
   verbose?: boolean;
+  /**
+   * When true, also writes `.superspec/models.yaml` from the example template.
+   * Default false — agents use built-in / skill defaults until the user opts in.
+   */
+  withModels?: boolean;
 }
 
 export interface InitResult {
@@ -77,7 +82,8 @@ This directory holds **repo-level** SuperSpec scaffolding — not per-feature ar
 
 | Path | Purpose |
 |------|---------|
-| \`templates/\` | Reference copies of tier templates (spec, plan, design, …) |
+| \`templates/\` | Reference copies of tier templates (spec, plan, design, …) and \`models.example.yaml\` |
+| \`models.yaml\` | Optional model routing overrides (only if created via \`--with-models\` or by hand) |
 | \`README.md\` | This file |
 
 Per-feature forge state lives under each spec directory: \`specs/<feature>/.superspec/state.json\` (gitignored).
@@ -86,6 +92,20 @@ Per-feature FR status is committed at \`specs/<feature>/status.md\`.
 Do **not** store feature specs here. Use \`specs/<feature>/\` at the repository root.
 `;
   await writeFile(outPath, body, "utf8");
+  return outPath;
+}
+
+async function writeModelsExample(root: string, templatesDir: string): Promise<string> {
+  const raw = await readFile(join(templatesDir, "models.example.yaml"), "utf8");
+  const outPath = join(root, ".superspec", "templates", "models.example.yaml");
+  await writeFile(outPath, raw, "utf8");
+  return outPath;
+}
+
+async function writeModelsConfig(root: string, templatesDir: string): Promise<string> {
+  const raw = await readFile(join(templatesDir, "models.example.yaml"), "utf8");
+  const outPath = join(root, ".superspec", "models.yaml");
+  await writeFile(outPath, raw, "utf8");
   return outPath;
 }
 
@@ -98,6 +118,7 @@ function rel(root: string, path: string): string {
 /** One-time repository bootstrap with a fixed layout (never arbitrary docs/ paths). */
 export async function initProject(options: InitOptions): Promise<InitResult> {
   const { mode } = options;
+  const withModels = options.withModels === true;
   const root = resolve(options.root);
   const cwd = process.cwd();
   const templatesDir = resolve(options.templatesDir ?? defaultTemplatesDir());
@@ -108,7 +129,7 @@ export async function initProject(options: InitOptions): Promise<InitResult> {
     log.push(line);
   };
 
-  note(`SuperSpec init starting (mode=${mode})`);
+  note(`SuperSpec init starting (mode=${mode}, withModels=${withModels})`);
   note(`cwd: ${cwd}`);
   note(`root: ${root}`);
   note(`templates: ${templatesDir}`);
@@ -159,6 +180,20 @@ export async function initProject(options: InitOptions): Promise<InitResult> {
   for (const p of templateFiles) {
     written.push(p);
     note(`wrote ${rel(root, p)}`);
+  }
+
+  if (await exists(join(templatesDir, "models.example.yaml"))) {
+    const examplePath = await writeModelsExample(root, templatesDir);
+    written.push(examplePath);
+    note(`wrote ${rel(root, examplePath)} (reference only — not active)`);
+  }
+
+  if (withModels) {
+    const modelsPath = await writeModelsConfig(root, templatesDir);
+    written.push(modelsPath);
+    note(`wrote ${rel(root, modelsPath)} (optional model routing — edit slugs to match your harness)`);
+  } else {
+    note("skipped .superspec/models.yaml (optional; pass --with-models or copy templates/models.example.yaml later)");
   }
 
   const gitkeep = join(root, "specs", ".gitkeep");

@@ -6,7 +6,7 @@ Forge uses isolated implementer and reviewer agents. On Codex, prefer **multi-ag
 
 ## Implementer
 
-Fill `agents/implementer.md`, then spawn a fresh agent with that prompt. Use the model from `route-model` (`mechanical`/`moderate` → fast; `complex` → strong).
+Fill `agents/implementer.md`, then spawn a fresh agent with that prompt. Use the model from `route-model` (`mechanical` → economy; `moderate` → standard; `complex` → frontier; pass harness `slug`).
 
 Require: red → green → refactor → commit → report `BASE_SHA`..`HEAD_SHA`.
 

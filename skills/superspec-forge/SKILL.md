@@ -62,7 +62,7 @@ digraph process {
     "Read execution map / plan, note global constraints" [shape=box];
     "Select next task (nextTask)" [shape=box];
     "Ready task returned?" [shape=diamond];
-    "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" [shape=box];
+    "Route task by complexity (mechanical->economy, moderate->standard, complex->frontier)" [shape=box];
     "Dispatch implementer subagent (red-green-refactor, zero prior context)" [shape=box];
     "Implementer asks questions?" [shape=diamond];
     "Answer questions, provide context" [shape=box];
@@ -80,9 +80,9 @@ digraph process {
 
     "Read execution map / plan, note global constraints" -> "Select next task (nextTask)";
     "Select next task (nextTask)" -> "Ready task returned?";
-    "Ready task returned?" -> "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" [label="yes"];
+    "Ready task returned?" -> "Route task by complexity (mechanical->economy, moderate->standard, complex->frontier)" [label="yes"];
     "Ready task returned?" -> "Call forge-status" [label="no (blocked/none left)"];
-    "Route task by complexity (mechanical->fast, moderate->fast, complex->strong)" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
+    "Route task by complexity (mechanical->economy, moderate->standard, complex->frontier)" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
     "Dispatch implementer subagent (red-green-refactor, zero prior context)" -> "Implementer asks questions?";
     "Implementer asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (red-green-refactor, zero prior context)";
@@ -125,13 +125,57 @@ An implementer that skips straight to code without a red step, or that reports s
 
 ## Model Selection
 
-Route every task through `route-model` before dispatch. The rule is mechanical, not judgment-based:
+**Quality-first:** one-shot correctness beats minimum spend. Never silently downgrade complexity to save cost. When the task brief clearly needs deeper reasoning than the card says, **reclassify-up** before dispatch.
 
-- **`complexity: "mechanical"`** (isolated functions, clear specs, deterministic transformations) -> fast model.
-- **`complexity: "moderate"`** (multi-file refactoring, straightforward feature work, structured changes) -> fast model.
-- **`complexity: "complex"`** (multi-file coordination, design judgment, system-wide implications) -> strong model.
+### 1. Call `route-model` (implementer and reviewer)
 
-Apply the same rule to the reviewer: a small mechanical diff does not need the strongest model to review; a complex task's diff does.
+```text
+route-model({ complexity, role: "implementer", attempt, kind?, harness? })
+route-model({ complexity, role: "reviewer", attempt, kind?, harness? })
+```
+
+Read **`tier`** (and optional `slug` / `thinkingHint` from the harness mapper). Compatibility shim `model: fast|strong` may still be present — prefer `tier`.
+
+Attempt-1 map:
+
+| Complexity | Implementer tier | Reviewer tier |
+|------------|------------------|---------------|
+| `mechanical` | `economy` | `economy` |
+| `moderate` | `standard` | `standard` |
+| `complex` | `frontier` | `frontier` |
+
+### 2. Map tier → harness slug
+
+Pass `projectRoot` to `route-model` so optional `.superspec/models.yaml` can override slugs:
+
+```text
+route-model({ complexity, role, attempt, kind, harness, projectRoot: "<repo root>" })
+```
+
+Use the returned **`slug`** (and `thinkingHint`) in `Task({ model: ... })`.  
+If `source` is `builtin` (no config file, or blank fields), use that slug or the closest model your harness exposes.
+
+**Optional user config:** `.superspec/models.yaml` (created only when the user opts in at init via `--with-models`, or by copying `templates/models.example.yaml`). Missing file = skill defaults. Resolution: kinds → attempts → roles → tiers → built-in map (attempts before roles so review ladders can escalate).
+
+Illustrative examples when no config (not prescriptions; never copy into `execution-map.md`):
+
+| Tier | Thinking hint | Cursor-ish | Claude-ish | GPT-ish |
+|------|---------------|------------|------------|---------|
+| `economy` | minimal | Composer / fast agents | Haiku-class | GPT-5.4-class |
+| `standard` | medium | Composer 2.5 / Sonnet-class | Sonnet 4.6 / 5 | GPT-5.5 medium |
+| `frontier` | high | strongest + high thinking | Opus 4.7 / 4.8 high | GPT-5.5 / 5.6 high |
+
+### 3. Attempt ladder on review failure
+
+Before `blocked`, on each review failure set `attempt = reviewFailures + 1` and re-call `route-model`:
+
+| Attempt | Implementer floor |
+|---------|-------------------|
+| 1 | table above |
+| 2 | at least `standard` (re-check under-classification) |
+| 3+ | `frontier` |
+
+If the brief was under-routed (design ambiguity, missing edge cases), reclassify-up even when the ladder would not yet force `frontier`. Reviewer tier ≥ implementer tier for that attempt.
 
 **Always specify the model explicitly when dispatching a subagent.** An omitted model inherits your session's default — often the most capable and most expensive — which silently defeats the routing rule.
 
@@ -179,7 +223,7 @@ Call step 0 at forge kickoff (after plan-phase approval in review mode, or immed
 ### Shared steps (every platform, per task)
 
 ```text
-1. route-model          → pick fast/strong for implementer AND reviewer
+1. route-model          → pick economy/standard/frontier (+ slug) for implementer AND reviewer
 2. next-task --verbose  → load persisted state from specs/<feature>/
 3. begin-task --task T00X --verbose
 4. [DISPATCH IMPLEMENTER — see platform section below]
@@ -385,11 +429,11 @@ After compaction or restart, trust `status.md`, `state.json`, and `git log` — 
 
 **Upstream:** superspec-route produces the execution map (or superspec-plan produces the task plan) this skill executes.
 
-**Downstream:** when `forge-status` reports `complete: true`, follow execution mode from `using-superspec`:
+**Downstream:** when `forge-status` reports `complete: true`, that means **all tasks are done** — not that matrix/lint/gates are green (`complete ≠ validate-ready`). Follow execution mode from `using-superspec`:
 
 **Review mode (default):** Present implementation summary + `status.md`. Wait for approval before validation.
 
-> "Forge complete — all tasks done. Review `status.md` and the diff. Reply when ready to run validation."
+> "Forge task loop complete — all tasks done. This is **not** validate-ready yet. Review `status.md` and the diff. Reply when ready to run `superspec-validate`."
 
 Then invoke **`superspec-validate`**.
 

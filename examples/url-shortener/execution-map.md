@@ -21,23 +21,23 @@ T001, T002, and T003 have no dependencies on each other or on anything else — 
 
 ## Parallel Windows
 
-| Window | Tasks | Model Routing | Parallelization Boundary |
-|--------|-------|----------------|---------------------------|
-| W1 | T001, T002, T003 | T001, T002 -> `fast`; T003 -> `fast` | No shared files (three separate `src/*.ts` + `test/*.ts` pairs); no dependencies among them |
-| W2 | T004 | `fast` | Must wait for all of W1 to reach `done` — T004 imports from all three W1 modules |
+| Window | Tasks | Model class | Parallelization Boundary |
+|--------|-------|-------------|---------------------------|
+| W1 | T001, T002, T003 | `economy` | No shared files (three separate `src/*.ts` + `test/*.ts` pairs); no dependencies among them |
+| W2 | T004 | `standard` | Must wait for all of W1 to reach `done` — T004 imports from all three W1 modules |
 
 ⚠️ W2 cannot start until every task in W1 is `done`. T004's own test imports `resetStore` from T003's module, so a partial W1 (e.g. T003 still `pending`) would leave T004's test unable to run, not merely fail it.
 
 ## Model Routing
 
-| Task | Complexity | Model Class | Rationale |
-|------|-----------|--------------|-----------|
-| T001 | `mechanical` | `fast` | A single pure function wrapping `URL` parsing — deterministic, no design judgment |
-| T002 | `mechanical` | `fast` | A single pure function wrapping `randomBytes` — deterministic, no design judgment |
-| T003 | `moderate` | `fast` | Structured multi-function module (insert/resolve/reset) but no ambiguity — the collision-safety invariant is already fully specified in design.md |
-| T004 | `moderate` | `fast` | Composition of three already-tested modules; no new design decisions, per `routeModel(complexity) → complexity === "complex" ? "strong" : "fast"` (only `complex` routes to `strong`) |
+| Task | Complexity | Model class | Rationale |
+|------|-----------|-------------|-----------|
+| T001 | `mechanical` | `economy` | A single pure function wrapping `URL` parsing — deterministic, no design judgment |
+| T002 | `mechanical` | `economy` | A single pure function wrapping `randomBytes` — deterministic, no design judgment |
+| T003 | `moderate` | `standard` | Structured multi-function module (insert/resolve/reset) but no ambiguity — the collision-safety invariant is already fully specified in design.md |
+| T004 | `moderate` | `standard` | Composition of three already-tested modules; no new design decisions (`moderate→standard`) |
 
-**Summary:** no task in this example plan is `complex` — the design decisions requiring judgment (reject-then-generate ordering, collision-check-with-regenerate) were already resolved in `design.md`'s Decisions section, so every implementation task here is mechanical-to-moderate execution of an already-settled design. This is expected for a small worked example; a larger feature would have at least one genuinely `complex` task (e.g. the collision-detection *decision itself*, if it hadn't already been made in design.md).
+**Summary:** no task in this example plan is `complex` — the design decisions requiring judgment (reject-then-generate ordering, collision-check-with-regenerate) were already resolved in `design.md`'s Decisions section, so every implementation task here is mechanical-to-moderate execution of an already-settled design. This is expected for a small worked example; a larger feature would have at least one genuinely `complex` → `frontier` task (e.g. the collision-detection *decision itself*, if it hadn't already been made in design.md). Tier mapping: `mechanical→economy`; `moderate→standard`; `complex→frontier`.
 
 ## Personas
 

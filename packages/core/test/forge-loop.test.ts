@@ -36,14 +36,22 @@ describe("forge status and escalation", () => {
     expect(state.tasks["T001"].status).toBe("blocked");
 
     const status = forgeStatus(state);
-    expect(status).toEqual({ total: 2, done: 0, blocked: 1, pending: 1, inProgress: 0, complete: false });
+    expect(status.total).toBe(2);
+    expect(status.done).toBe(0);
+    expect(status.blocked).toBe(1);
+    expect(status.pending).toBe(1);
+    expect(status.inProgress).toBe(0);
+    expect(status.complete).toBe(false);
+    expect(status.nextStep).toBeUndefined();
   });
 
   it("is complete only when every task is done", () => {
     const state = initState(tasks);
     recordResult(state, "T001", true, { maxReviewFailures: 3 });
     recordResult(state, "T002", true, { maxReviewFailures: 3 });
-    expect(forgeStatus(state).complete).toBe(true);
+    const status = forgeStatus(state);
+    expect(status.complete).toBe(true);
+    expect(status.nextStep).toMatch(/validate-ready/i);
   });
 
   it("throws on unknown task id", () => {

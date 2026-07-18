@@ -123,7 +123,8 @@ little to copy here — that is expected and correct.
 | `spec-parser.ts`, `plan-parser.ts` | neither (SK parses in Python) | NEW (minimal regex glue) | Deterministic, repeatable inputs to the matrix; ~30 lines each |
 | `matrix.ts` (FR↔Task↔Test↔Gate) | **neither project has it** | NEW | The "missing link" that makes SDD+TDD *verifiable*; a model eyeballing coverage is exactly the unreliable thing we remove |
 | `plan-lint.ts` (No-Placeholder + TDD-cycle) | rule text from `SP: writing-plans` "No Placeholders" & `SP: test-driven-development` | NEW code enforcing COPIED rules | Superpowers enforces these by *prose + human reviewer*; code makes it a deterministic, always-on check |
-| `model-router.ts` | neither (routing decision) | NEW (trivial) | The deterministic hook forge uses to pick strong vs. fast model |
+| `model-router.ts` | neither (routing decision) | NEW (trivial) | The deterministic hook forge uses to pick economy/standard/frontier tier |
+| `harness-model-map.ts` | neither | NEW | Illustrative harness slug mapping from abstract tier |
 | `forge-loop.ts` (state, selection, persist, escalate) | dispatch *approach* from `SP: subagent-driven-development` / `executing-plans` | NEW code, COPIED approach | Resumability across sessions and "don't hang on a stuck task" require persisted deterministic state — prose can't guarantee it |
 | `scaffold.ts` | `SK` renders templates in code | REIMPLEMENT (trivial) | Deterministic file generation |
 | `mcp-server.ts` | `@modelcontextprotocol/sdk` v1.x — `registerTool` API confirmed via Context7 (`/modelcontextprotocol/typescript-sdk` v1.x) | COPY SDK usage | Thin transport adapter, no business logic |

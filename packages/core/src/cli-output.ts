@@ -20,6 +20,7 @@ export function formatForgeStatusReport(
 ): string {
   const head = `SuperSpec forge-status: ${status.done}/${status.total} done · ${status.inProgress} in progress · ${status.pending} pending · complete=${status.complete}`;
   const meta: string[] = [];
+  if (status.complete && status.nextStep) meta.push(status.nextStep);
   if (extra?.dir) meta.push(`dir: ${extra.dir}`);
   if (extra?.statusPath) meta.push(`status.md: ${extra.statusPath}`);
   if (extra?.cwd) meta.push(`cwd: ${extra.cwd}`);

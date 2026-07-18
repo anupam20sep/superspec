@@ -18,7 +18,7 @@ A critical insight from parallel task dispatching is that **independent work mus
 Use superspec-route when:
 - You have a task plan with multiple tasks and dependencies
 - You need to determine which tasks can run in parallel
-- You need to assign model routing (complex complexity → strong model, mechanical and moderate complexity → fast model)
+- You need to assign model routing (`mechanical` → `economy`, `moderate` → `standard`, `complex` → `frontier`)
 - You need to define verification gates before tasks are executed
 - You need rollback strategies per execution window
 
@@ -62,22 +62,24 @@ Example:
 - T002 depends on T001; T004 depends on T001 → both go to W2 (same window, can run in parallel)
 - T007 depends on T006 → W3 if T006 is in W1
 
-### 3. Route by Complexity
+### 3. Validate Complexity, Then Route by Tier
 
-For each task, apply the model-routing rule:
-- **`complexity: "complex"`** → route to `strong` model
-  - Examples: schema design, API architecture, component state management, backward-compatibility analysis
-  - Rationale: Requires reasoning about system-wide implications, trade-offs, edge cases
-- **`complexity: "moderate"`** → route to `fast` model
-  - Examples: multi-file refactoring, straightforward feature enhancement, moderate state changes
-  - Rationale: Structured work with clear scope; requires coordination but not design judgment
-- **`complexity: "mechanical"`** → route to `fast` model
-  - Examples: test scaffolding, seed scripts, boilerplate setup, deterministic transformations
-  - Rationale: Follows a clear pattern; minimal ambiguity about intent
+**Quality-first:** validate each task's `complexity` against the `superspec-plan` classification rubric before mapping. When between two labels, choose the higher one. Do not invent a lower complexity to save cost. Flag mislabels (false mechanical, middle-bias, false complex) and correct them in the plan if needed before writing the map.
 
-**Model-routing function:** `routeModel(complexity) → complexity === "complex" ? "strong" : "fast"` (any non-`"complex"` complexity, including `"mechanical"` and `"moderate"`, routes to `"fast"`)
+For each task, map complexity → **model tier** (not a vendor model name, not schedule speed):
 
-Assign model routing to each task individually, then summarize by window (all tasks in a window may use different models, but you group them because they have no dependencies).
+- **`complexity: "mechanical"`** → tier `economy`
+  - Deterministic execution of an already-decided design (scaffolding, seeds, boilerplate, localized bugfix with known root cause)
+- **`complexity: "moderate"`** → tier `standard`
+  - Needs understanding / structured multi-file work; design mostly settled
+- **`complexity: "complex"`** → tier `frontier`
+  - Deep reasoning, novel design, cross-cutting judgment, system-wide implications
+
+**Model-routing function:** `routeModel({ complexity }) → tier` where `mechanical→economy`, `moderate→standard`, `complex→frontier` (plus role/attempt/kind biases in MCP). Compatibility shim: `economy→fast`, `standard|frontier→strong`.
+
+**Do not** write vendor model IDs (Sonnet, Opus, GPT-…) or bare legacy `fast`/`strong` alone in execution-map cells. Tiers only. Illustrative model names belong in forge + harness mapper, not in the map.
+
+Assign a tier to each task individually, then summarize by window. Mixed windows must list per-task tiers (never a single bare token that hides a `frontier` outlier).
 
 ### 4. Assign Personas
 
@@ -156,13 +158,15 @@ Write output file `execution-map.md` with these sections:
    - Explanation of parallelizable paths
 
 2. **Parallel Windows:**
-   - Tabular list: Window | Tasks | Model Routing | Parallelization Boundary
+   - Tabular list: Window | Tasks | Model class | Parallelization Boundary
+   - **Model class** cells = `` `tier` `` only (e.g. `` `economy` ``), or per-task list when mixed: `T005: \`frontier\`; others: \`economy\``
+   - Never bare legacy `fast`/`strong`; never vendor model names
    - Constraints (⚠️ flags for blocking dependencies)
    - Why tasks in window don't block each other
 
 3. **Model Routing:**
-   - Tabular list: Task | Complexity | Model Class | Rationale
-   - Summary line: `routeModel(complexity) → complexity === "complex" ? "strong" : "fast"` (any non-`"complex"` complexity, including `"mechanical"` and `"moderate"`, routes to `"fast"`)
+   - Tabular list: Task | Complexity | Model class (tier) | Rationale
+   - Summary line: `mechanical→economy`; `moderate→standard`; `complex→frontier` (call `route-model` MCP for role/attempt/kind)
 
 4. **Personas:**
    - Tabular list: Window | Primary Persona | Secondary Persona | Responsibilities
@@ -176,12 +180,12 @@ Write output file `execution-map.md` with these sections:
    - Tabular list: Gate | Applies To | Criteria | Owner
    - Gate policy (how failures block merge)
 
-All tables must be properly markdown-formatted. All references to tasks use T### format. Use backticks for complexity values (`mechanical`, `moderate`, `complex`) and model classes (`strong`, `fast`) — the two are distinct: complexity is a property of the task, model class is what `routeModel` returns.
+All tables must be properly markdown-formatted. All references to tasks use T### format. Use backticks for complexity values (`mechanical`, `moderate`, `complex`) and model tiers (`economy`, `standard`, `frontier`) — the two are distinct: complexity is a property of the task; tier is what `routeModel` returns.
 
 ## Common Mistakes
 
-**❌ Wrong model routing:** Assigning `complex` to deterministic scaffolding (should be `mechanical`)
-**✅ Correct:** Reserve `complex` for design/reasoning decisions; `moderate` for structured multi-file work; `mechanical` for deterministic execution
+**❌ Wrong model routing:** Assigning `complex` to deterministic scaffolding (should be `mechanical` → `economy`); writing vendor model names or bare `fast`/`strong` in map cells
+**✅ Correct:** Reserve `complex` → `frontier` for design/reasoning; `moderate` → `standard` for structured multi-file work; `mechanical` → `economy` for deterministic execution; map cells are tiers only
 
 **❌ Overlapping windows:** Putting dependent tasks in the same window
 **✅ Correct:** Dependent tasks go in sequential windows (T001 in W1, T002 in W2)
@@ -217,12 +221,12 @@ T007: Frontend components [complexity: complex] → (none)
 **Output (execution-map.md):**
 - **Dependency DAG:** T001→T002→T003; T001→T004→T005; T006→T007 (three independent chains)
 - **Windows:**
-  - W1: T001 (schema) | complex → strong
-  - W2: T002 (seed data), T006 (frontend setup) | mechanical → fast
-  - W3: T003, T004, T007 | mixed (T004 complex→strong; T003, T007 routed per complexity)
-  - W4: T005 (integration tests) | mechanical → fast
-  - W5: Quality gates | mechanical → fast
-- **Model Routing:** T001, T004, T007 → strong; T002, T003, T005, T006 → fast
+  - W1: T001 (schema) | `frontier`
+  - W2: T002 (seed data), T006 (frontend setup) | `economy`
+  - W3: T003, T004, T007 | mixed (T004: `frontier`; T003: `economy`; T007: `frontier`)
+  - W4: T005 (integration tests) | `economy`
+  - W5: Quality gates | `economy`
+- **Model Routing:** T001, T004, T007 → `frontier`; T002, T003, T005, T006 → `economy`
 - **Personas:** @backend for W1, W3/W4; @frontend for W2, W3; @qa for W4, W5
 - **Rollback:** W1 reverts schema; W2 deletes fixtures; W3 reverts code; W5 blocks on gate failures
 - **Gates:** Schema validation (W1), coverage (W2–W4), type safety (W3), integration tests (W4), security (W5)
@@ -241,7 +245,7 @@ Before handing off to superspec-forge:
 1. **Dependency DAG is acyclic:** No circular dependencies
 2. **Windows respect dependencies:** No task in W(n) depends on a task in W(n+1) or later
 3. **No shared state within window:** Re-check if multiple tasks edit same file
-4. **Model routing is consistent:** All `complex` tasks → `strong`; all `mechanical` and `moderate` tasks → `fast`
+4. **Model routing is consistent:** All `complex` → `frontier`; all `moderate` → `standard`; all `mechanical` → `economy`; no vendor IDs in map cells
 5. **Personas are assigned:** Every window has a primary persona
 6. **Gates are testable:** Every gate has measurable criteria (not "looks good")
 7. **Rollback is complete:** Every window has a concrete rollback procedure

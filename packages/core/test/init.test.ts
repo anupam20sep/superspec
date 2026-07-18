@@ -41,6 +41,23 @@ describe("initProject", () => {
     await expect(initProject({ root, mode: "lite" })).rejects.toThrow(/already exists/);
   });
 
+  it("does not write models.yaml by default", async () => {
+    const result = await initProject({ root, mode: "lite" });
+    expect(result.ok).toBe(true);
+    await access(join(root, ".superspec", "templates", "models.example.yaml"));
+    await expect(access(join(root, ".superspec", "models.yaml"))).rejects.toThrow();
+    expect(result.log.some((l) => l.includes("skipped .superspec/models.yaml"))).toBe(true);
+  });
+
+  it("writes models.yaml when withModels is true", async () => {
+    const result = await initProject({ root, mode: "lite", withModels: true });
+    expect(result.ok).toBe(true);
+    await access(join(root, ".superspec", "models.yaml"));
+    const body = await readFile(join(root, ".superspec", "models.yaml"), "utf8");
+    expect(body).toContain("tiers:");
+    expect(body).toContain("kinds:");
+  });
+
   it("formatInitReport includes summary and JSON", () => {
     const report = formatInitReport({
       ok: true,

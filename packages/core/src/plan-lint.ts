@@ -1,4 +1,4 @@
-import { parsePlan } from "./plan-parser.js";
+import { parsePlan, findMalformedFrRefs, normalizeTaskId } from "./plan-parser.js";
 
 export interface LintFinding {
   line: number;
@@ -15,7 +15,12 @@ const PLACEHOLDER_PATTERNS: { rule: string; re: RegExp }[] = [
 
 const TASK_HEADING_RE = /^###\s+Task\s+([\w.]+):/;
 const FAILING_TEST_RE = /failing test/i;
-const PASSING_TEST_RE = /verify it passes|make sure (they|it) pass/i;
+/**
+ * GREEN step: confirm tests pass.
+ * `pass` / `passes` / `passed` must be whole words (not "password").
+ */
+const PASSING_TEST_RE =
+  /verify it passes|verify (?:it |they |build\s*\+\s*)?pass(?:es|ed)?\b|make sure (?:they|it) pass(?:es|ed)?\b|expected:\s*pass\b|\ball(?:\s+\w+){0,3}\s+pass(?:es|ed)?\b|(?:→|->)\s*pass\b|\brun to verify pass\b/i;
 const VERIFY_CMD_RE = /Run:\s*`[^`]+`|Expected:\s*.+/i;
 const PROVISION_RE = /script|checklist|provision/i;
 const SIGNOFF_RE = /sign[- ]?off|owner:\s*@/i;
@@ -37,7 +42,7 @@ function splitTaskBlocks(lines: string[]): TaskBlock[] {
     const m = TASK_HEADING_RE.exec(line);
     if (m) {
       flush();
-      current = { id: m[1], startLine: i + 1, body: [] };
+      current = { id: normalizeTaskId(m[1]), startLine: i + 1, body: [] };
       return;
     }
     if (current) current.body.push(line);
@@ -111,6 +116,16 @@ export function lintPlan(markdown: string): LintFinding[] {
     for (const p of PLACEHOLDER_PATTERNS) {
       if (p.re.test(line)) {
         findings.push({ line: i + 1, rule: p.rule, message: `Placeholder detected: "${line.trim()}"` });
+      }
+    }
+    if (/^\*\*Implements:\*\*/i.test(line)) {
+      const bad = findMalformedFrRefs(line);
+      for (const id of bad) {
+        findings.push({
+          line: i + 1,
+          rule: "fr-id-format",
+          message: `Implements uses "${id}" — matrix expects exactly three digits (FR-###).`,
+        });
       }
     }
   });

@@ -53,7 +53,7 @@ explore/ingest → scope → refine → architect → plan → route → forge �
 The coordinator stays lean; heavy work runs in isolated subagents:
 
 1. **Select** — `next-task` loads persisted state; `begin-task` marks `in_progress`
-2. **Route** — `route-model` picks fast vs strong model for implementer **and** reviewer
+2. **Route** — `route-model` picks economy/standard/frontier tier (+ harness slug) for implementer **and** reviewer
 3. **Implement** — dispatch `agents/implementer.md` (red → green → refactor → commit)
 4. **Review** — dispatch `agents/task-reviewer.md` (fresh context, read-only; spec + quality verdicts)
 5. **Record** — `record-result` + `sync-status`; repeat until `forge-status` reports `complete: true`
@@ -162,7 +162,7 @@ On first MCP use, `npx` downloads `@superspec-dev/core` from npm. Requires Node.
   "mcpServers": {
     "superspec": {
       "command": "npx",
-      "args": ["-y", "@superspec-dev/core@0.2.5", "mcp"]
+      "args": ["-y", "@superspec-dev/core@0.2.11", "mcp"]
     }
   }
 }
@@ -443,7 +443,7 @@ Always pass `--dir` / `stateDir`. Add `--verbose` for human-readable summary + J
 | `lint-spec` | `lint --spec` | Type, FR/SC completeness, placeholders |
 | `lint-plan` | `lint --plan` | Placeholders; TDD rules for code tasks |
 | `lint-design` | `lint --design` | Decisions, contracts, clarification markers |
-| `route-model` | — | Recommend strong vs fast model |
+| `route-model` | — | Recommend economy/standard/frontier tier (+ harness slug) |
 | `scaffold` | `scaffold` | Render tier templates |
 | `next-task` | `next-task` | Next DAG-ready forge task |
 | `begin-task` | `begin-task` | Mark task `in_progress` |
@@ -563,7 +563,7 @@ Add to `.cursor/mcp.json`, `.mcp.json`, or Codex `~/.codex/config.toml` / `codex
   "mcpServers": {
     "superspec": {
       "command": "npx",
-      "args": ["-y", "@superspec-dev/core@0.2.5", "mcp"]
+      "args": ["-y", "@superspec-dev/core@0.2.11", "mcp"]
     }
   }
 }

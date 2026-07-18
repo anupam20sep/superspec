@@ -9,6 +9,8 @@ import { lintPlan } from "./plan-lint.js";
 import { lintDesign, lintDesignText } from "./design-lint.js";
 import { lintSpec } from "./spec-lint.js";
 import { routeModel } from "./model-router.js";
+import { type HarnessId } from "./harness-model-map.js";
+import { resolveDispatchModel } from "./models-config.js";
 import { scaffold } from "./scaffold.js";
 import { initState, forgeStatus, nextTask, recordResult, loadState, saveState, markInProgress } from "./forge-loop.js";
 import { discoverPersonas } from "./persona-discovery.js";
@@ -72,9 +74,44 @@ export function buildToolDefinitions(): ToolDef[] {
     },
     {
       name: "route-model",
-      description: "Recommend strong or fast model for a task complexity.",
-      schema: { complexity: z.enum(["mechanical", "moderate", "complex"]) },
-      handler: async (args) => json({ model: routeModel({ complexity: args.complexity as "mechanical" | "moderate" | "complex" }) }),
+      description:
+        "Recommend abstract model tier (economy|standard|frontier) from task complexity, role, and attempt. " +
+        "Resolves optional model overrides from <projectRoot>/.superspec/models.yaml, then ~/.superspec/models.yaml, then built-in harness defaults. " +
+        "Slug resolution order: kinds → attempts → roles → tiers → builtin.",
+      schema: {
+        complexity: z.enum(["mechanical", "moderate", "complex"]),
+        role: z.enum(["implementer", "reviewer"]).optional(),
+        attempt: z.number().int().min(1).optional(),
+        kind: z.enum(["code", "verify", "provision", "signoff", "doc-sync"]).optional(),
+        harness: z.enum(["cursor", "claude", "codex"]).optional(),
+        projectRoot: z.string().optional(),
+      },
+      handler: async (args) => {
+        const routed = routeModel({
+          complexity: args.complexity as "mechanical" | "moderate" | "complex",
+          role: args.role as "implementer" | "reviewer" | undefined,
+          attempt: args.attempt as number | undefined,
+          kind: args.kind as "code" | "verify" | "provision" | "signoff" | "doc-sync" | undefined,
+        });
+        const harness = (args.harness as HarnessId | undefined) ?? undefined;
+        const resolved = await resolveDispatchModel({
+          tier: routed.tier,
+          role: routed.role,
+          kind: args.kind as "code" | "verify" | "provision" | "signoff" | "doc-sync" | undefined,
+          attempt: routed.attempt,
+          harness,
+          projectRoot: args.projectRoot as string | undefined,
+        });
+        return json({
+          ...routed,
+          harness: resolved.harness,
+          slug: resolved.slug,
+          thinkingHint: resolved.thinkingHint,
+          examples: resolved.examples,
+          source: resolved.source,
+          configPath: resolved.configPath,
+        });
+      },
     },
     {
       name: "scaffold",
@@ -85,13 +122,14 @@ export function buildToolDefinitions(): ToolDef[] {
     {
       name: "init",
       description:
-        "Bootstrap SuperSpec in a repository: constitution.md at root, specs/, .superspec/templates/, optional program.md (full mode).",
+        "Bootstrap SuperSpec in a repository: constitution.md at root, specs/, .superspec/templates/, optional program.md (full mode), optional .superspec/models.yaml when withModels is true.",
       schema: {
         root: z.string(),
         mode: z.enum(["lite", "full"]),
         templatesDir: z.string().optional(),
         feature: z.string().optional(),
         verbose: z.boolean().optional(),
+        withModels: z.boolean().optional(),
       },
       handler: async (args) => {
         try {
@@ -101,6 +139,7 @@ export function buildToolDefinitions(): ToolDef[] {
             templatesDir: args.templatesDir as string | undefined,
             feature: args.feature as string | undefined,
             verbose: (args.verbose as boolean | undefined) ?? true,
+            withModels: (args.withModels as boolean | undefined) ?? false,
           });
           return {
             content: [

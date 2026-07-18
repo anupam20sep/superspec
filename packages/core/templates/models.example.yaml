@@ -1,0 +1,43 @@
+# SuperSpec model routing (OPTIONAL)
+#
+# Copy to .superspec/models.yaml to activate, or run:
+#   npx -y @superspec-dev/core init --root . --mode lite --with-models
+#
+# Omit this file, or leave any value null/blank, to use SuperSpec skill defaults.
+# Agents resolve: kinds → attempts → roles → tiers → built-in harness map.
+# Null/blank values fall through. Attempt overrides apply before roles so forge
+# review ladders can escalate even when roles.reviewer is set.
+# Do NOT copy model names into plan.md or execution-map.md.
+
+harness: cursor   # cursor | claude | codex
+
+# By capability tier (mechanical→economy, moderate→standard, complex→frontier)
+tiers:
+  economy: composer-2          # Claude: haiku · Codex: gpt-5.4
+  standard: composer-2.5       # Claude: sonnet · Codex: gpt-5.5
+  frontier: claude-opus-4-8    # Claude: opus · Codex: gpt-5.5-high
+
+# Thinking hints per tier (harness-owned; null = skill default)
+thinking:
+  economy: minimal             # minimal | medium | high
+  standard: medium
+  frontier: high
+
+# By role (null = use tiers.*)
+roles:
+  implementer: null
+  reviewer: claude-sonnet-4-6  # prefer ≥ standard-class
+
+# By task kind (all SuperSpec kinds; null = use role/tier)
+kinds:
+  code: null                   # feature / TDD implementation
+  verify: composer-2.5         # run checks, capture evidence
+  provision: composer-2.5      # infra / env
+  signoff: claude-sonnet-4-6   # human gate
+  doc-sync: composer-2         # docs / specs
+
+# Forge review-failure ladder (attempt number as string key)
+attempts:
+  "1": null                    # first try
+  "2": composer-2.5            # after 1st review fail
+  "3": claude-opus-4-8         # after 2nd fail / frontier

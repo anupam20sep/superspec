@@ -37,22 +37,48 @@ describe("MCP tool definitions", () => {
     expect(payload.gaps).toEqual(["FR-002"]);
   });
 
-  it("route-model handler routes by complexity", async () => {
+  it("route-model handler routes complex to frontier with strong shim", async () => {
     const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
     const res = await tool.handler({ complexity: "complex" });
-    expect(JSON.parse(res.content[0].text)).toEqual({ model: "strong" });
+    const payload = JSON.parse(res.content[0].text);
+    expect(payload.tier).toBe("frontier");
+    expect(payload.model).toBe("strong");
+    expect(payload.slug).toBeTruthy();
+    expect(payload.thinkingHint).toBe("high");
+    expect(payload.source).toBe("builtin");
   });
 
-  it("route-model handler routes moderate complexity to fast model", async () => {
+  it("route-model handler routes moderate to standard (shim strong)", async () => {
     const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
     const res = await tool.handler({ complexity: "moderate" });
-    expect(JSON.parse(res.content[0].text)).toEqual({ model: "fast" });
+    const payload = JSON.parse(res.content[0].text);
+    expect(payload.tier).toBe("standard");
+    expect(payload.model).toBe("strong");
   });
 
-  it("route-model schema accepts moderate and complex complexity values", () => {
+  it("route-model handler routes mechanical to economy (shim fast)", async () => {
+    const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
+    const res = await tool.handler({ complexity: "mechanical", harness: "claude" });
+    const payload = JSON.parse(res.content[0].text);
+    expect(payload.tier).toBe("economy");
+    expect(payload.model).toBe("fast");
+    expect(payload.harness).toBe("claude");
+    expect(payload.slug).toBe("haiku");
+  });
+
+  it("route-model schema accepts role, attempt, kind, harness, projectRoot", () => {
     const tool = buildToolDefinitions().find((t) => t.name === "route-model")!;
     const schema = z.object(tool.schema);
-    expect(() => schema.parse({ complexity: "moderate" })).not.toThrow();
+    expect(() =>
+      schema.parse({
+        complexity: "moderate",
+        role: "reviewer",
+        attempt: 2,
+        kind: "code",
+        harness: "codex",
+        projectRoot: "/tmp/proj",
+      }),
+    ).not.toThrow();
     expect(() => schema.parse({ complexity: "complex" })).not.toThrow();
   });
 });

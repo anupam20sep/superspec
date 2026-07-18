@@ -8,9 +8,9 @@ This check drives the *real* forge state machine (`packages/core/src/forge-loop.
 
 Drove `examples/url-shortener/plan.md`'s 4 real tasks (T001–T004) through the full loop: select via `nextTask`, dispatch a fresh implementer subagent per task (red-green-refactor, per the plan's exact test/implementation code), dispatch a fresh reviewer subagent per task (spec-compliance + code-quality verdicts), record the verdict via `recordResult`, repeat.
 
-- **T001 (URL Validator, mechanical → fast/Haiku):** implemented, reviewed (both verdicts PASS), recorded `done`.
+- **T001 (URL Validator, mechanical → economy):** implemented, reviewed (both verdicts PASS), recorded `done`.
 - **T002 (Code Generator) and T003 (ShortLink Store)** dispatched in parallel per the execution-map's W1 (both genuinely independent, no shared files). A real git-ref-lock race occurred from the two agents committing near-simultaneously — the T003 agent detected its own commit had been mis-bundled with T002's files, `git reset` and re-split into two correctly-scoped commits (`2c69687` for T002, `1870c1f` for T003) without any files being altered. Both reviewed (both verdicts PASS), recorded `done`. This incident is itself informative evidence: `nextTask`/`recordResult`'s pure-function-plus-explicit-save design meant the underlying state machine was never at risk from the git-level race — only the git commit boundaries needed fixing, not the recorded task state.
-- **T004 (Shortener Service, moderate → fast)** was correctly withheld by `nextTask` until all of T001/T002/T003 reached `done` (confirmed: calling `nextTask` before all three landed returns them, not T004; only once all three are `done` does `nextTask` return T004) — proving the DAG-aware dependency gate, not just first-in-plan-order selection. Implemented, reviewed (PASS), recorded `done`.
+- **T004 (Shortener Service, moderate → standard)** was correctly withheld by `nextTask` until all of T001/T002/T003 reached `done` (confirmed: calling `nextTask` before all three landed returns them, not T004; only once all three are `done` does `nextTask` return T004) — proving the DAG-aware dependency gate, not just first-in-plan-order selection. Implemented, reviewed (PASS), recorded `done`.
 
 Final call:
 ```
