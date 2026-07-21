@@ -1,6 +1,6 @@
 {
   "name": "@superspec-dev/render",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Renders SuperSpec's shared skill content from content/skills/ into repo-root skills/ for Claude Code and Cursor plugins.",
   "type": "module",
   "license": "MIT",

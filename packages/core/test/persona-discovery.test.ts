@@ -48,6 +48,21 @@ describe("discoverPersonas", () => {
     expect(personas[0].path).toBe(join(dir, "frontend-developer.md"));
   });
 
+  it("discovers personas from CRLF Windows agent files", async () => {
+    const dir = join(root, ".claude", "agents");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "backend-developer.md"),
+      "---\r\nname: backend-developer\r\ndescription: \"API work.\"\r\n---\r\n\r\nBody",
+      "utf8",
+    );
+
+    const personas = await discoverPersonas({ claude: dir, includeDefaults: false });
+    expect(personas).toHaveLength(1);
+    expect(personas[0].name).toBe("backend-developer");
+    expect(personas[0].description).toBe('"API work."');
+  });
+
   it("reads Codex TOML agents from .codex/agents", async () => {
     const dir = join(root, ".codex", "agents");
     await mkdir(dir, { recursive: true });

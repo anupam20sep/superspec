@@ -5,7 +5,8 @@ export interface Skill {
 }
 
 export function readSkill(markdown: string, dirName: string): Skill {
-  const m = markdown.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  // Accept LF and CRLF frontmatter delimiters (Windows agent files).
+  const m = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!m) return { name: dirName, frontmatter: "", body: markdown };
   return { name: dirName, frontmatter: m[1], body: m[2] };
 }

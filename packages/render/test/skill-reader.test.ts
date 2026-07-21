@@ -14,4 +14,13 @@ describe("readSkill", () => {
     expect(s.frontmatter).toBe("");
     expect(s.body).toBe("no fm here");
   });
+
+  it("parses CRLF frontmatter from Windows agent files", () => {
+    const md =
+      "---\r\nname: backend-developer\r\ndescription: \"API work.\"\r\n---\r\n\r\nBody\r\n";
+    const s = readSkill(md, "backend-developer");
+    expect(frontmatterField(s.frontmatter, "name")).toBe("backend-developer");
+    expect(frontmatterField(s.frontmatter, "description")).toBe('"API work."');
+    expect(s.body.trim()).toBe("Body");
+  });
 });
