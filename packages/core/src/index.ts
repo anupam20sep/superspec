@@ -23,6 +23,8 @@ export {
   loadModelsConfig,
   parseModelsConfig,
   resolveDispatchModel,
+  pickHarnessOverride,
+  type ModelRef,
   type ModelsConfig,
   type ResolveDispatchModelInput,
   type ResolvedDispatchModel,

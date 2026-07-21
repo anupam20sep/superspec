@@ -155,7 +155,7 @@ route-model({ complexity, role, attempt, kind, harness, projectRoot: "<repo root
 Use the returned **`slug`** (and `thinkingHint`) in `Task({ model: ... })`.  
 If `source` is `builtin` (no config file, or blank fields), use that slug or the closest model your harness exposes.
 
-**Optional user config:** `.superspec/models.yaml` (created only when the user opts in at init via `--with-models`, or by copying `templates/models.example.yaml`). Missing file = skill defaults. Resolution: kinds → attempts → roles → tiers → built-in map (attempts before roles so review ladders can escalate).
+**Optional user config:** `.superspec/models.yaml` (created only when the user opts in at init via `--with-models`, or by copying `templates/models.example.yaml`). Missing file = skill defaults. Resolution: kinds → attempts → roles → tiers → built-in map (attempts before roles so review ladders can escalate). Each leaf may be a scalar slug or a **harness map** `{ cursor, claude, codex }` — always pass `harness` + `projectRoot` so the correct entry is used. Planning stages (explore→route) are **not** driven by this file; the user picks those models at run time.
 
 Illustrative examples when no config (not prescriptions; never copy into `execution-map.md`):
 

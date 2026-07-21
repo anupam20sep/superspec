@@ -77,7 +77,8 @@ export function buildToolDefinitions(): ToolDef[] {
       description:
         "Recommend abstract model tier (economy|standard|frontier) from task complexity, role, and attempt. " +
         "Resolves optional model overrides from <projectRoot>/.superspec/models.yaml, then ~/.superspec/models.yaml, then built-in harness defaults. " +
-        "Slug resolution order: kinds → attempts → roles → tiers → builtin.",
+        "Slug resolution order: kinds → attempts → roles → tiers → builtin. " +
+        "Each override may be a scalar or a { cursor, claude, codex } map keyed by the harness arg.",
       schema: {
         complexity: z.enum(["mechanical", "moderate", "complex"]),
         role: z.enum(["implementer", "reviewer"]).optional(),
